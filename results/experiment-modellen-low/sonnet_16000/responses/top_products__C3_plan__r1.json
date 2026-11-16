@@ -1,0 +1,33 @@
+{
+  "text": "Het knelpunt is de grote sort op (p.id, o.id) voor `count(DISTINCT)`, die naar schijf spilt. Ik aggregeer eerst per variant, zodat de DISTINCT-tellingen niet meer over alle regels gaan.\n\nPer variant geldt: `count(DISTINCT o.id)` is het aantal orders per variant, maar een order kan meerdere varianten van hetzelfde product bevatten. Je kunt dat dus niet simpel optellen op productniveau. Daarom aggregeer ik per (product, order) voor de order_count en houd ik de sommen apart.\n\n```sql\nWITH base AS (\n  SELECT pv.product_id,\n         pv.id AS variant_id,\n         o.id  AS order_id,\n         ol.quantity,\n         ol.line_total_cents\n    FROM order_lines ol\n    JOIN orders o            ON o.id = ol.order_id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n), per_order AS (\n  SELECT product_id, order_id,\n         sum(quantity)         AS q,\n         sum(line_total_cents) AS r,\n         count(DISTINCT variant_id) AS dummy\n    FROM base\n   GROUP BY product_id, order_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(*)           AS order_count,\n       sum(po.q)          AS quantity,\n       sum(po.r)          AS revenue_cents,\n       (SELECT count(DISTINCT b.variant_id) FROM base b WHERE b.product_id = p.id) AS variant_count\n  FROM per_order po\n  JOIN products p ON p.id = po.product_id\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDeze versie is waarschijnlijk niet sneller: `base` wordt meerdere keren gelezen en de subquery per product maakt het eerder duurder. Ik heb de aanpak niet gemeten en kan geen identieke prestatiewinst garanderen. Zonder indexen of schemawijzigingen zie ik geen betrouwbare verbetering, dus het veiligste is de originele query te houden.\n\n```sql\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT o.id)        AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM order_lines ol\n  JOIN orders o           ON o.id = ol.order_id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p         ON p.id = pv.product_id\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nIk geef de originele query ongewijzigd terug, omdat mijn herschrijving geen aantoonbare winst oplevert. De kosten zitten in de sort voor `count(DISTINCT)`, en die is zonder extra work_mem of indexen niet betrouwbaar te vermijden.",
+  "input_tokens": 4239,
+  "output_tokens": 1360,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.022078,
+  "usage_raw": {
+    "prompt_tokens": 4239,
+    "completion_tokens": 1360,
+    "total_tokens": 5599,
+    "cost": 0.022078,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.022078,
+      "upstream_inference_prompt_cost": 0.008478,
+      "upstream_inference_completions_cost": 0.0136
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 9.1,
+  "sql": "WITH base AS (\n  SELECT pv.product_id,\n         pv.id AS variant_id,\n         o.id  AS order_id,\n         ol.quantity,\n         ol.line_total_cents\n    FROM order_lines ol\n    JOIN orders o            ON o.id = ol.order_id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n), per_order AS (\n  SELECT product_id, order_id,\n         sum(quantity)         AS q,\n         sum(line_total_cents) AS r,\n         count(DISTINCT variant_id) AS dummy\n    FROM base\n   GROUP BY product_id, order_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(*)           AS order_count,\n       sum(po.q)          AS quantity,\n       sum(po.r)          AS revenue_cents,\n       (SELECT count(DISTINCT b.variant_id) FROM base b WHERE b.product_id = p.id) AS variant_count\n  FROM per_order po\n  JOIN products p ON p.id = po.product_id\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

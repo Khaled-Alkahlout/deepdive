@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY sum(o.total_cents) DESC\n LIMIT %(limit)s\n```\n\nDe query filtert nu direct op de klanten van de tenant, in plaats van alle orders van alle tenants te materialiseren en te aggregeren. Totalen en laatste orderdatum komen uit één aggregatie, zonder DISTINCT ON of extra joins. Het venster op de laatste order staat in de HAVING (`max(created_at)`), dus de uitkomst blijft gelijk.",
+  "input_tokens": 1982,
+  "output_tokens": 1115,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.015114,
+  "usage_raw": {
+    "prompt_tokens": 1982,
+    "completion_tokens": 1115,
+    "total_tokens": 3097,
+    "cost": 0.015114,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.015114,
+      "upstream_inference_prompt_cost": 0.003964,
+      "upstream_inference_completions_cost": 0.01115
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 728,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 8.4,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY sum(o.total_cents) DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: top_customers\n-- owner: sales\n-- params: tenant_id, from, to, limit\n-- Customers ranked by revenue, with their most recent order. Only customers\n-- whose last order falls inside the window are listed.\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s\n```\n\nDe MATERIALIZED CTE dwong een volledige scan plus materialisatie van alle orders van álle tenants af, gevolgd door een aparte sort voor de DISTINCT ON én een aparte hash-aggregatie; nu worden de orders eerst via de join beperkt tot klanten van de tenant en worden sum/count/max in één aggregatiepas berekend (max(created_at) is identiek aan DISTINCT ON … ORDER BY created_at DESC omdat created_at NOT NULL is). GROUP BY c.id volstaat omdat id de primary key is, en de HAVING op max(created_at) is exact hetzelfde filter als dat op lo.last_order_at. Een extra tenant-filter direct op orders (zodat orders_total_eur_idx gebruikt kan worden) is bewust weggelaten, omdat het schema niet afdwingt dat orders.tenant_id gelijk is aan de tenant van de klant.",
+  "input_tokens": 1982,
+  "output_tokens": 8806,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.46012,
+  "usage_raw": {
+    "prompt_tokens": 1982,
+    "completion_tokens": 8806,
+    "total_tokens": 10788,
+    "cost": 0.46012,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.46012,
+      "upstream_inference_prompt_cost": 0.01982,
+      "upstream_inference_completions_cost": 0.4403
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 8162,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 110.1,
+  "sql": "-- name: top_customers\n-- owner: sales\n-- params: tenant_id, from, to, limit\n-- Customers ranked by revenue, with their most recent order. Only customers\n-- whose last order falls inside the window are listed.\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-fable-5.1"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "Het probleem is dat de planner de aggregatie (totals) als inner van een nested loop met 9799 loops uitvoert, door een verkeerde schatting van 1 rij. Ik combineer totals en last_order in één aggregatie per klant en filter orders vooraf op klanten van de tenant.\n\nLet op de semantiek: de last_order wordt berekend over alle orders met de genoemde statussen, en de tenant-filter staat alleen op customers. Een order kan een andere tenant_id hebben dan de klant, dus ik filter niet op orders.tenant_id, maar join op customers met tenant_id. De MATERIALIZED-CTE vervalt.\n\nTie-handling: DISTINCT ON levert alleen created_at op, dus `max(created_at)` is identiek. Bij gelijke revenue is de volgorde in het origineel niet gedefinieerd, dus die hoeft niet exact gelijk te zijn.\n\n```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN (\n        SELECT o.customer_id,\n               sum(o.total_cents) AS revenue,\n               count(*)           AS order_count,\n               max(o.created_at)  AS last_order_at\n          FROM orders o\n         WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n         GROUP BY o.customer_id\n       ) t ON t.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s\n```\n\nEén enkele aggregatie vervangt de twee CTE's, de sort voor DISTINCT ON en de geneste lus met 48 miljoen weggefilterde rijen. Het resultaat blijft gelijk: dezelfde kolommen, rijen en ORDER BY.",
+  "input_tokens": 3478,
+  "output_tokens": 712,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.014076,
+  "usage_raw": {
+    "prompt_tokens": 3478,
+    "completion_tokens": 712,
+    "total_tokens": 4190,
+    "cost": 0.014076,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.014076,
+      "upstream_inference_prompt_cost": 0.006956,
+      "upstream_inference_completions_cost": 0.00712
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 6.0,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN (\n        SELECT o.customer_id,\n               sum(o.total_cents) AS revenue,\n               count(*)           AS order_count,\n               max(o.created_at)  AS last_order_at\n          FROM orders o\n         WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n         GROUP BY o.customer_id\n       ) t ON t.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

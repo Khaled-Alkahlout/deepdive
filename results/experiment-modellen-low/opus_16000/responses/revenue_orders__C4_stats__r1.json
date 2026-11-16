@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: revenue_orders\n-- owner: finance\n-- params: tenant_id, from, to\n-- Revenue-bearing orders in a window. Period grouping (day/week/month, week\n-- start, fiscal month boundaries) is applied by the service layer so the same\n-- query feeds every grouping the dashboard offers.\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nDe query is al optimaal binnen de regels, dus ik geef hem ongewijzigd terug. Hij draait in ongeveer 9 ms met een bitmap-scan die ongeveer 40%% van een kleine tabel (1504 pagina's) volledig uit de cache leest, en bij brede vensters zoals deze is geen andere toegangsweg goedkoper. Een echte winst vergt een index op (tenant_id, created_at), eventueel met INCLUDE (status, total_cents, currency), maar dat valt buiten wat een herschrijving van de query mag doen.",
+  "input_tokens": 2339,
+  "output_tokens": 444,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.018236,
+  "usage_raw": {
+    "prompt_tokens": 2339,
+    "completion_tokens": 444,
+    "total_tokens": 2783,
+    "cost": 0.018236,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.018236,
+      "upstream_inference_prompt_cost": 0.009356,
+      "upstream_inference_completions_cost": 0.00888
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 5.4,
+  "sql": "-- name: revenue_orders\n-- owner: finance\n-- params: tenant_id, from, to\n-- Revenue-bearing orders in a window. Period grouping (day/week/month, week\n-- start, fiscal month boundaries) is applied by the service layer so the same\n-- query feeds every grouping the dashboard offers.\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-opus-5.5"
+}

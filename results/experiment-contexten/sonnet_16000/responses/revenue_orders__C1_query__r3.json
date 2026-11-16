@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nDeze query is al een eenvoudige selectie zonder joins, aggregaties of subqueries, dus er valt met alleen een herschrijving niets zinvols te winnen. De prestaties hangen af van een geschikte index (bijvoorbeeld op tenant_id, created_at), maar indexen mogen niet worden toegevoegd. Daarom geef ik de originele query ongewijzigd terug. Er is ook geen ORDER BY, dus er is geen volgorde die behouden moet blijven.",
+  "input_tokens": 620,
+  "output_tokens": 311,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.00435,
+  "usage_raw": {
+    "prompt_tokens": 620,
+    "completion_tokens": 311,
+    "total_tokens": 931,
+    "cost": 0.00435,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.00435,
+      "upstream_inference_prompt_cost": 0.00124,
+      "upstream_inference_completions_cost": 0.00311
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 3.0,
+  "sql": "SELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-sonnet-5.5"
+}

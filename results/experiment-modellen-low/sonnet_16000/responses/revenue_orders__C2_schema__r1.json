@@ -1,0 +1,33 @@
+{
+  "text": "Ik zie geen zinvolle herschrijving die hetzelfde resultaat garandeert. De query is al een eenvoudige selectie op één tabel met sargable predicaten, zonder joins, subqueries of functies op kolommen. Een snellere uitvoering hangt af van een index op (tenant_id, created_at), en die mag ik niet toevoegen. De bestaande index (created_at, tenant_id) wordt al gebruikt voor het bereikfilter. Een herschrijving zou het resultaat niet sneller maken.\n\n```sql\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nIk heb de query ongewijzigd teruggegeven. Een composite index op (tenant_id, created_at) zou helpen, maar dat valt buiten de regels.",
+  "input_tokens": 1297,
+  "output_tokens": 379,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.006384,
+  "usage_raw": {
+    "prompt_tokens": 1297,
+    "completion_tokens": 379,
+    "total_tokens": 1676,
+    "cost": 0.006384,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.006384,
+      "upstream_inference_prompt_cost": 0.002594,
+      "upstream_inference_completions_cost": 0.00379
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 3.4,
+  "sql": "SELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-sonnet-5.5"
+}

@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="1152pt" height="648pt" viewBox="0 0 1152 648" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-11-16T18:26:31.930473</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 648 
+L 1152 648 
+L 1152 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 97.92 554.04 
+L 1123.2 554.04 
+L 1123.2 142.56 
+L 97.92 142.56 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_1"/>
+     <g id="text_1">
+      <text style="font-weight: 700; font-size: 15px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #14161a" x="279.824516" y="573.320469" transform="rotate(-0 279.824516 573.320469)">effort: low</text>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_2"/>
+     <g id="text_2">
+      <text style="font-weight: 700; font-size: 15px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #14161a" x="610.56" y="573.320469" transform="rotate(-0 610.56 573.320469)">effort: medium</text>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_3"/>
+     <g id="text_3">
+      <text style="font-weight: 700; font-size: 15px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #14161a" x="941.295484" y="573.320469" transform="rotate(-0 941.295484 573.320469)">effort: high</text>
+     </g>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2">
+    <g id="ytick_1">
+     <g id="line2d_4">
+      <path d="M 97.92 554.04 
+L 1123.2 554.04 
+" clip-path="url(#p9aab589fd1)" style="fill: none; stroke: #e6e8ec; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_5"/>
+     <g id="text_4">
+      <text style="font-size: 12px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #4b5058" x="94.42" y="558.774375" transform="rotate(-0 94.42 558.774375)">$0</text>
+     </g>
+    </g>
+    <g id="ytick_2">
+     <g id="line2d_6">
+      <path d="M 97.92 451.17 
+L 1123.2 451.17 
+" clip-path="url(#p9aab589fd1)" style="fill: none; stroke: #e6e8ec; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_7"/>
+     <g id="text_5">
+      <text style="font-size: 12px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #4b5058" x="94.42" y="455.904375" transform="rotate(-0 94.42 455.904375)">$0,050</text>
+     </g>
+    </g>
+    <g id="ytick_3">
+     <g id="line2d_8">
+      <path d="M 97.92 348.3 
+L 1123.2 348.3 
+" clip-path="url(#p9aab589fd1)" style="fill: none; stroke: #e6e8ec; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_9"/>
+     <g id="text_6">
+      <text style="font-size: 12px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #4b5058" x="94.42" y="353.034375" transform="rotate(-0 94.42 353.034375)">$0,10</text>
+     </g>
+    </g>
+    <g id="ytick_4">
+     <g id="line2d_10">
+      <path d="M 97.92 245.43 
+L 1123.2 245.43 
+" clip-path="url(#p9aab589fd1)" style="fill: none; stroke: #e6e8ec; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_11"/>
+     <g id="text_7">
+      <text style="font-size: 12px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #4b5058" x="94.42" y="250.164375" transform="rotate(-0 94.42 250.164375)">$0,15</text>
+     </g>
+    </g>
+    <g id="ytick_5">
+     <g id="line2d_12">
+      <path d="M 97.92 142.56 
+L 1123.2 142.56 
+" clip-path="url(#p9aab589fd1)" style="fill: none; stroke: #e6e8ec; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_13"/>
+     <g id="text_8">
+      <text style="font-size: 12px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end; fill: #4b5058" x="94.42" y="147.294375" transform="rotate(-0 94.42 147.294375)">$0,20</text>
+     </g>
+    </g>
+    <g id="text_9">
+     <text style="font-size: 14px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5058" x="46.179375" y="348.3" transform="rotate(-90 46.179375 348.3)">Kosten per goed antwoord (USD)</text>
+    </g>
+   </g>
+   <g id="patch_3">
+    <path d="M 97.92 554.04 
+L 1123.2 554.04 
+" style="fill: none; stroke: #e6e8ec; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 150.837677 554.04 
+L 230.214194 554.04 
+L 230.214194 545.365253 
+L 150.837677 545.365253 
+z
+" clip-path="url(#p9aab589fd1)" style="fill: #2a78d6"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 240.136258 554.04 
+L 319.512774 554.04 
+L 319.512774 417.703817 
+L 240.136258 417.703817 
+z
+" clip-path="url(#p9aab589fd1)" style="fill: #eb6834"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 329.434839 554.04 
+L 408.811355 554.04 
+L 408.811355 294.603917 
+L 329.434839 294.603917 
+z
+" clip-path="url(#p9aab589fd1)" style="fill: #1baf7a"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 481.573161 554.04 
+L 560.949677 554.04 
+L 560.949677 543.698759 
+L 481.573161 543.698759 
+z
+" clip-path="url(#p9aab589fd1)" style="fill: #2a78d6"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 570.871742 554.04 
+L 650.248258 554.04 
+L 650.248258 371.023983 
+L 570.871742 371.023983 
+z
+" clip-path="url(#p9aab589fd1)" style="fill: #eb6834"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 660.170323 554.04 
+L 739.546839 554.04 
+L 739.546839 282.262603 
+L 660.170323 282.262603 
+z
+" clip-path="url(#p9aab589fd1)" style="fill: #1baf7a"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 812.308645 554.04 
+L 891.685161 554.04 
+L 891.685161 540.265707 
+L 812.308645 540.265707 
+z
+" clip-path="url(#p9aab589fd1)" style="fill: #2a78d6"/>
+   </g>
+   <g id="patch_11">
+    <path d="M 901.607226 554.04 
+L 980.983742 554.04 
+L 980.983742 428.886643 
+L 901.607226 428.886643 
+z
+" clip-path="url(#p9aab589fd1)" style="fill: #eb6834"/>
+   </g>
+   <g id="patch_12">
+    <path d="M 990.905806 554.04 
+L 1070.282323 554.04 
+L 1070.282323 244.114978 
+L 990.905806 244.114978 
+z
+" clip-path="url(#p9aab589fd1)" style="fill: #1baf7a"/>
+   </g>
+   <g id="text_10">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #14161a" x="190.525935" y="537.481204" transform="rotate(-0 190.525935 537.481204)">$0,0042</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 11px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5058" x="190.525935" y="518.910976" transform="rotate(-0 190.525935 518.910976)">11/48 goed</text>
+   </g>
+   <g id="text_12">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #14161a" x="279.824516" y="409.819768" transform="rotate(-0 279.824516 409.819768)">$0,066</text>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 11px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5058" x="279.824516" y="391.24954" transform="rotate(-0 279.824516 391.24954)">8/48 goed</text>
+   </g>
+   <g id="text_14">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #14161a" x="369.123097" y="286.719868" transform="rotate(-0 369.123097 286.719868)">$0,13</text>
+   </g>
+   <g id="text_15">
+    <text style="font-size: 11px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5058" x="369.123097" y="268.14964" transform="rotate(-0 369.123097 268.14964)">10/48 goed</text>
+   </g>
+   <g id="text_16">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #14161a" x="521.261419" y="535.81471" transform="rotate(-0 521.261419 535.81471)">$0,0050</text>
+   </g>
+   <g id="text_17">
+    <text style="font-size: 11px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5058" x="521.261419" y="517.244482" transform="rotate(-0 521.261419 517.244482)">11/48 goed</text>
+   </g>
+   <g id="text_18">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #14161a" x="610.56" y="363.139934" transform="rotate(-0 610.56 363.139934)">$0,089</text>
+   </g>
+   <g id="text_19">
+    <text style="font-size: 11px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5058" x="610.56" y="344.569705" transform="rotate(-0 610.56 344.569705)">6/48 goed</text>
+   </g>
+   <g id="text_20">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #14161a" x="699.858581" y="274.378554" transform="rotate(-0 699.858581 274.378554)">$0,13</text>
+   </g>
+   <g id="text_21">
+    <text style="font-size: 11px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5058" x="699.858581" y="255.808326" transform="rotate(-0 699.858581 255.808326)">12/48 goed</text>
+   </g>
+   <g id="text_22">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #14161a" x="851.996903" y="532.381658" transform="rotate(-0 851.996903 532.381658)">$0,0067</text>
+   </g>
+   <g id="text_23">
+    <text style="font-size: 11px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5058" x="851.996903" y="513.81143" transform="rotate(-0 851.996903 513.81143)">12/48 goed</text>
+   </g>
+   <g id="text_24">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #14161a" x="941.295484" y="421.002594" transform="rotate(-0 941.295484 421.002594)">$0,061</text>
+   </g>
+   <g id="text_25">
+    <text style="font-size: 11px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5058" x="941.295484" y="402.432366" transform="rotate(-0 941.295484 402.432366)">12/48 goed</text>
+   </g>
+   <g id="text_26">
+    <text style="font-weight: 700; font-size: 14px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #14161a" x="1030.594065" y="236.230929" transform="rotate(-0 1030.594065 236.230929)">$0,15</text>
+   </g>
+   <g id="text_27">
+    <text style="font-size: 11px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5058" x="1030.594065" y="217.660701" transform="rotate(-0 1030.594065 217.660701)">12/48 goed</text>
+   </g>
+   <g id="legend_1">
+    <g id="line2d_14">
+     <defs>
+      <path id="m0abdd80624" d="M 0 5 
+C 1.326016 5 2.597899 4.473168 3.535534 3.535534 
+C 4.473168 2.597899 5 1.326016 5 0 
+C 5 -1.326016 4.473168 -2.597899 3.535534 -3.535534 
+C 2.597899 -4.473168 1.326016 -5 0 -5 
+C -1.326016 -5 -2.597899 -4.473168 -3.535534 -3.535534 
+C -4.473168 -2.597899 -5 -1.326016 -5 0 
+C -5 1.326016 -4.473168 2.597899 -3.535534 3.535534 
+C -2.597899 4.473168 -1.326016 5 0 5 
+z
+" style="stroke: #2a78d6"/>
+     </defs>
+     <g>
+      <use xlink:href="#m0abdd80624" x="122.62" y="115.0904" style="fill: #2a78d6; stroke: #2a78d6"/>
+     </g>
+    </g>
+    <g id="text_28">
+     <text style="font-size: 13px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #14161a" x="139.52" y="119.6404" transform="rotate(-0 139.52 119.6404)">Haiku 5.5</text>
+    </g>
+    <g id="line2d_15">
+     <defs>
+      <path id="me12e0d4708" d="M 0 5 
+C 1.326016 5 2.597899 4.473168 3.535534 3.535534 
+C 4.473168 2.597899 5 1.326016 5 0 
+C 5 -1.326016 4.473168 -2.597899 3.535534 -3.535534 
+C 2.597899 -4.473168 1.326016 -5 0 -5 
+C -1.326016 -5 -2.597899 -4.473168 -3.535534 -3.535534 
+C -4.473168 -2.597899 -5 -1.326016 -5 0 
+C -5 1.326016 -4.473168 2.597899 -3.535534 3.535534 
+C -2.597899 4.473168 -1.326016 5 0 5 
+z
+" style="stroke: #eb6834"/>
+     </defs>
+     <g>
+      <use xlink:href="#me12e0d4708" x="226.526563" y="115.0904" style="fill: #eb6834; stroke: #eb6834"/>
+     </g>
+    </g>
+    <g id="text_29">
+     <text style="font-size: 13px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #14161a" x="243.426563" y="119.6404" transform="rotate(-0 243.426563 119.6404)">Sonnet 5.5</text>
+    </g>
+    <g id="line2d_16">
+     <defs>
+      <path id="m3eb907bcf7" d="M 0 5 
+C 1.326016 5 2.597899 4.473168 3.535534 3.535534 
+C 4.473168 2.597899 5 1.326016 5 0 
+C 5 -1.326016 4.473168 -2.597899 3.535534 -3.535534 
+C 2.597899 -4.473168 1.326016 -5 0 -5 
+C -1.326016 -5 -2.597899 -4.473168 -3.535534 -3.535534 
+C -4.473168 -2.597899 -5 -1.326016 -5 0 
+C -5 1.326016 -4.473168 2.597899 -3.535534 3.535534 
+C -2.597899 4.473168 -1.326016 5 0 5 
+z
+" style="stroke: #1baf7a"/>
+     </defs>
+     <g>
+      <use xlink:href="#m3eb907bcf7" x="338.064531" y="115.0904" style="fill: #1baf7a; stroke: #1baf7a"/>
+     </g>
+    </g>
+    <g id="text_30">
+     <text style="font-size: 13px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #14161a" x="354.964531" y="119.6404" transform="rotate(-0 354.964531 119.6404)">Opus 5.5</text>
+    </g>
+   </g>
+  </g>
+  <g id="text_31">
+   <text style="font-weight: 700; font-size: 27px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #14161a" x="34.56" y="49.148438" transform="rotate(-0 34.56 49.148438)">Per goed antwoord kost Opus ≈26x en Sonnet ≈13x zoveel als Haiku</text>
+  </g>
+  <g id="text_32">
+   <text style="font-size: 15px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #4b5058" x="34.56" y="79.144687" transform="rotate(-0 34.56 79.144687)">Totale kosten van alle antwoorden in de groep, ook de mislukte, gedeeld door het aantal goede antwoorden.</text>
+  </g>
+  <g id="text_33">
+   <text style="font-size: 11.5px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #7b808a" x="34.56" y="611.597906" transform="rotate(-0 34.56 611.597906)">Maximum is 12 goed per groep (alleen top_customers wordt opgelost). Haiku haalt 11-12 · Sonnet haalt 6-12 · Opus haalt 10-12.</text>
+  </g>
+  <g id="text_34">
+   <text style="font-size: 11.5px; font-family: 'Segoe UI', 'Inter', 'Helvetica Neue', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #7b808a" x="34.56" y="631.037906" transform="rotate(-0 34.56 631.037906)">Kosten berekend uit tokens × prijs per miljoen tokens (Haiku $0,10/$0,50 · Sonnet $2/$10 · Opus $4/$20, in/uit), niet uit de factuur.</text>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p9aab589fd1">
+   <rect x="97.92" y="142.56" width="1025.28" height="411.48"/>
+  </clipPath>
+ </defs>
+</svg>

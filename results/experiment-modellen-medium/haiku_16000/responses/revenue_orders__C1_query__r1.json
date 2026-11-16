@@ -1,0 +1,33 @@
+{
+  "text": "Ik zie geen zinvolle verbetering: de query is al een eenvoudige selectie op één tabel en de planner kan de `IN`-lijst en de tijdsbereikfilter al goed verwerken. Een herschrijving zou naar verwachting geen sneller plan opleveren, dus geef ik de originele query ongewijzigd terug.\n\n```sql\n-- name: revenue_orders\n-- owner: finance\n-- params: tenant_id, from, to\n-- Revenue-bearing orders in a window. Period grouping (day/week/month, week\n-- start, fiscal month boundaries) is applied by the service layer so the same\n-- query feeds every grouping the dashboard offers.\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```",
+  "input_tokens": 620,
+  "output_tokens": 656,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.00039,
+  "usage_raw": {
+    "prompt_tokens": 620,
+    "completion_tokens": 656,
+    "total_tokens": 1276,
+    "cost": 0.00039,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.00039,
+      "upstream_inference_prompt_cost": 6.2e-05,
+      "upstream_inference_completions_cost": 0.000328
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 290,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 3.3,
+  "sql": "-- name: revenue_orders\n-- owner: finance\n-- params: tenant_id, from, to\n-- Revenue-bearing orders in a window. Period grouping (day/week/month, week\n-- start, fiscal month boundaries) is applied by the service layer so the same\n-- query feeds every grouping the dashboard offers.\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-haiku-5.5"
+}

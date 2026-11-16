@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: revenue_orders\n-- owner: finance\n-- params: tenant_id, from, to\n-- Revenue-bearing orders in a window. Period grouping (day/week/month, week\n-- start, fiscal month boundaries) is applied by the service layer so the same\n-- query feeds every grouping the dashboard offers.\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nIk zie geen veilige herschrijving die sneller is: de query is al eenvoudig en de filters staan rechtstreeks op de kolommen. De index `orders_created_at_tenant_idx` heeft `created_at` als eerste kolom, dus de `tenant_id`-filter wordt waarschijnlijk als filter toegepast en niet als indexvoorwaarde. Een index op `(tenant_id, created_at)` zou dit verbeteren, maar die is niet toegestaan binnen deze opdracht.",
+  "input_tokens": 1297,
+  "output_tokens": 833,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0005462,
+  "usage_raw": {
+    "prompt_tokens": 1297,
+    "completion_tokens": 833,
+    "total_tokens": 2130,
+    "cost": 0.0005462,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0005462,
+      "upstream_inference_prompt_cost": 0.0001297,
+      "upstream_inference_completions_cost": 0.0004165
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 408,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 4.1,
+  "sql": "-- name: revenue_orders\n-- owner: finance\n-- params: tenant_id, from, to\n-- Revenue-bearing orders in a window. Period grouping (day/week/month, week\n-- start, fiscal month boundaries) is applied by the service layer so the same\n-- query feeds every grouping the dashboard offers.\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-haiku-5.5"
+}

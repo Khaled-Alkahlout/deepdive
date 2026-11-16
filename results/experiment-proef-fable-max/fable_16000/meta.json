@@ -1,0 +1,20 @@
+{
+  "model": "anthropic/claude-fable-5.1",
+  "provider": "openrouter",
+  "effort": "max",
+  "max_tokens": 16000,
+  "reps": 1,
+  "val_reps": 7,
+  "cases": [
+    "top_customers"
+  ],
+  "conditions": [
+    "C1_query",
+    "C2_schema",
+    "C3_plan",
+    "C4_stats"
+  ],
+  "label": "proef-fable-max|fable|16000",
+  "started": "2026-11-11T20:23:24",
+  "dry_run": false
+}

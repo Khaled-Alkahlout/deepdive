@@ -1,0 +1,70 @@
+﻿query;context;herhaling;model;aanbieder;effort;max_uitvoertokens;duur_origineel_ms;duur_kandidaat_ms;versnelling_x;oordeel;aantal_parametersets;parametersets_met_verschil;reden_afkeuring;invoertokens;uitvoertokens;stopreden;modeltijd_s;kosten_usd;query_ongewijzigd;aantal_metingen;spreiding_origineel_ms;spreiding_kandidaat_ms;sql_kandidaat
+top_customers;C1 query;1;anthropic/claude-fable-5.1;openrouter;max;16000;;;;AFGEKAPT DOOR DE TOKENLIMIET;;;afgekapt door de tokenlimiet voor een volledig SQL-blok;924;16000;tokenlimiet bereikt;207,5;0,80924;nee;;;;
+top_customers;C2 schema;1;anthropic/claude-fable-5.1;openrouter;max;16000;9109,4;42,3;215,40;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;1982;8806;klaar;110,1;0,46012;nee;3;104,8;2,8;"-- name: top_customers
+-- owner: sales
+-- params: tenant_id, from, to, limit
+-- Customers ranked by revenue, with their most recent order. Only customers
+-- whose last order falls inside the window are listed.
+SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       sum(o.total_cents) AS revenue,
+       count(*)           AS order_count,
+       max(o.created_at)  AS last_order_at
+  FROM customers c
+  JOIN orders o ON o.customer_id = c.id
+ WHERE c.tenant_id = %(tenant_id)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+ GROUP BY c.id
+HAVING max(o.created_at) >= %(from)s
+   AND max(o.created_at) <  %(to)s
+ ORDER BY revenue DESC
+ LIMIT %(limit)s"
+top_customers;C3 plan;1;anthropic/claude-fable-5.1;openrouter;max;16000;9218,3;54,9;167,81;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;3478;14503;klaar;186,9;0,75993;nee;3;68,5;1,6;"-- name: top_customers
+-- owner: sales
+-- params: tenant_id, from, to, limit
+-- Customers ranked by revenue, with their most recent order. Only customers
+-- whose last order falls inside the window are listed.
+WITH t AS (
+    SELECT o.customer_id,
+           sum(o.total_cents) AS revenue,
+           count(*)           AS order_count,
+           max(o.created_at)  AS last_order_at
+      FROM orders o
+     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')
+     GROUP BY o.customer_id
+    HAVING max(o.created_at) >= %(from)s
+       AND max(o.created_at) <  %(to)s
+)
+SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       t.revenue,
+       t.order_count,
+       t.last_order_at
+  FROM customers c
+  JOIN t ON t.customer_id = c.id
+ WHERE c.tenant_id = %(tenant_id)s
+ ORDER BY t.revenue DESC
+ LIMIT %(limit)s"
+top_customers;C4 statistieken;1;anthropic/claude-fable-5.1;openrouter;max;16000;9536,7;48,0;198,72;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;5078;7881;klaar;96,7;0,44483;nee;3;326,8;5,0;"-- name: top_customers
+-- owner: sales
+-- params: tenant_id, from, to, limit
+SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       sum(o.total_cents) AS revenue,
+       count(*)           AS order_count,
+       max(o.created_at)  AS last_order_at
+  FROM customers c
+  JOIN orders o ON o.customer_id = c.id
+ WHERE c.tenant_id = %(tenant_id)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+ GROUP BY c.id
+HAVING max(o.created_at) >= %(from)s
+   AND max(o.created_at) <  %(to)s
+ ORDER BY revenue DESC
+ LIMIT %(limit)s"

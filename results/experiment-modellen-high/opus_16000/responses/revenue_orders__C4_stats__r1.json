@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: revenue_orders\n-- owner: finance\n-- params: tenant_id, from, to\n-- Revenue-bearing orders in a window. Period grouping (day/week/month, week\n-- start, fiscal month boundaries) is applied by the service layer so the same\n-- query feeds every grouping the dashboard offers.\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nDe query is al een eenvoudige filter van ongeveer 6 ms, en de planner kiest per parameterset zelf tussen de tenant-index en de `(created_at, tenant_id)`-index. Zonder nieuwe indexen valt er niets zinvols te winnen. Het groeperen per periode naar SQL verplaatsen zou de resultaatvorm veranderen, die de service layer bewust per rij nodig heeft, dus ik geef de originele query ongewijzigd terug.",
+  "input_tokens": 2339,
+  "output_tokens": 564,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.020636,
+  "usage_raw": {
+    "prompt_tokens": 2339,
+    "completion_tokens": 564,
+    "total_tokens": 2903,
+    "cost": 0.020636,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.020636,
+      "upstream_inference_prompt_cost": 0.009356,
+      "upstream_inference_completions_cost": 0.01128
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 150,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 5.9,
+  "sql": "-- name: revenue_orders\n-- owner: finance\n-- params: tenant_id, from, to\n-- Revenue-bearing orders in a window. Period grouping (day/week/month, week\n-- start, fiscal month boundaries) is applied by the service layer so the same\n-- query feeds every grouping the dashboard offers.\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-opus-5.5"
+}

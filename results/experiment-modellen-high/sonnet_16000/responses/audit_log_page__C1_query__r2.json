@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: audit_log_page\n-- owner: compliance\n-- params: tenant_id, table_name, row_id, from, to, limit, offset\n-- One page of the audit trail, newest first. table_name and row_id are\n-- optional; pass NULL to skip the filter.\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s\n```\n\nIk zie geen zinvolle, veilige verbetering zonder het schema en de indexen te kennen. De optionele filters worden bij constante parameters al door de planner weggesimplificeerd, en de ORDER BY met LIMIT kan een index op `(tenant_id, created_at, id)` direct gebruiken. Een herschrijving met UNION-varianten of een \"late row lookup\" voegt complexiteit toe en kan het resultaat of de plannerkeuze verslechteren. Als er al een passende index bestaat, is deze query al vrijwel optimaal.",
+  "input_tokens": 735,
+  "output_tokens": 1093,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0124,
+  "usage_raw": {
+    "prompt_tokens": 735,
+    "completion_tokens": 1093,
+    "total_tokens": 1828,
+    "cost": 0.0124,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0124,
+      "upstream_inference_prompt_cost": 0.00147,
+      "upstream_inference_completions_cost": 0.01093
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 537,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 8.7,
+  "sql": "-- name: audit_log_page\n-- owner: compliance\n-- params: tenant_id, table_name, row_id, from, to, limit, offset\n-- One page of the audit trail, newest first. table_name and row_id are\n-- optional; pass NULL to skip the filter.\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

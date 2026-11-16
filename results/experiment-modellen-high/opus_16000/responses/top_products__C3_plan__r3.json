@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH l AS (\n    SELECT pv.product_id,\n           ol.order_id,\n           pv.id                    AS variant_id,\n           sum(ol.quantity)         AS q,\n           sum(ol.line_total_cents) AS r\n      FROM order_lines ol\n      JOIN orders o            ON o.id = ol.order_id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY pv.product_id, ol.order_id, pv.id\n), agg AS (\n    SELECT product_id,\n           count(DISTINCT order_id)   AS order_count,\n           sum(q)::bigint             AS quantity,\n           sum(r)                     AS revenue_cents,\n           count(DISTINCT variant_id) AS variant_count\n      FROM l\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nHet origineel sorteert ruim 81.000 brede rijen (met sku, naam en merk) op `p.id, o.id` voor de `count(DISTINCT ...)`, en die sort loopt over naar schijf. Hier wordt eerst met smalle uuid-kolommen per (product, order, variant) en daarna per product geaggregeerd; de productgegevens worden pas daarna bij de ongeveer 1.750 resultaatrijen gejoind. De dubbele som wordt naar `bigint` gecast, zodat de kolomtypen (bigint/numeric) gelijk blijven aan die van het origineel.",
+  "input_tokens": 4239,
+  "output_tokens": 2698,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.070916,
+  "usage_raw": {
+    "prompt_tokens": 4239,
+    "completion_tokens": 2698,
+    "total_tokens": 6937,
+    "cost": 0.070916,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.070916,
+      "upstream_inference_prompt_cost": 0.016956,
+      "upstream_inference_completions_cost": 0.05396
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1971,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 26.9,
+  "sql": "WITH l AS (\n    SELECT pv.product_id,\n           ol.order_id,\n           pv.id                    AS variant_id,\n           sum(ol.quantity)         AS q,\n           sum(ol.line_total_cents) AS r\n      FROM order_lines ol\n      JOIN orders o            ON o.id = ol.order_id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY pv.product_id, ol.order_id, pv.id\n), agg AS (\n    SELECT product_id,\n           count(DISTINCT order_id)   AS order_count,\n           sum(q)::bigint             AS quantity,\n           sum(r)                     AS revenue_cents,\n           count(DISTINCT variant_id) AS variant_count\n      FROM l\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

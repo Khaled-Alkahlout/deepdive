@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH cand AS (\n    SELECT DISTINCT o.customer_id\n      FROM orders o\n      JOIN customers c ON c.id = o.customer_id\n     WHERE c.tenant_id = %(tenant_id)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n       AND o.created_at >= %(from)s\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM cand k\n  JOIN customers c ON c.id = k.customer_id\n                  AND c.tenant_id = %(tenant_id)s\n  CROSS JOIN LATERAL (\n      SELECT sum(o.total_cents) AS revenue,\n             count(*)           AS order_count,\n             max(o.created_at)  AS last_order_at\n        FROM orders o\n       WHERE o.customer_id = c.id\n         AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n  ) t\n WHERE t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s\n```\n\nDe herschrijving berekent de ordertotalen en de laatste order alleen per kandidaat-klant van deze tenant, in plaats van voor alle klanten van alle tenants. Kandidaten worden gevonden via een index-vriendelijke filter op `created_at >= from`, en de `to`-grens wordt daarna toegepast op de laatste order. Bij gelijke omzet kan de volgorde van rijen tussen beide versies verschillen, omdat het origineel die ook niet deterministisch ordent.",
+  "input_tokens": 1982,
+  "output_tokens": 2405,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0014007,
+  "usage_raw": {
+    "prompt_tokens": 1982,
+    "completion_tokens": 2405,
+    "total_tokens": 4387,
+    "cost": 0.0014007,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0014007,
+      "upstream_inference_prompt_cost": 0.0001982,
+      "upstream_inference_completions_cost": 0.0012025
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1795,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 10.7,
+  "sql": "WITH cand AS (\n    SELECT DISTINCT o.customer_id\n      FROM orders o\n      JOIN customers c ON c.id = o.customer_id\n     WHERE c.tenant_id = %(tenant_id)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n       AND o.created_at >= %(from)s\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM cand k\n  JOIN customers c ON c.id = k.customer_id\n                  AND c.tenant_id = %(tenant_id)s\n  CROSS JOIN LATERAL (\n      SELECT sum(o.total_cents) AS revenue,\n             count(*)           AS order_count,\n             max(o.created_at)  AS last_order_at\n        FROM orders o\n       WHERE o.customer_id = c.id\n         AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n  ) t\n WHERE t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

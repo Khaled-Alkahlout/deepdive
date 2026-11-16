@@ -1,0 +1,33 @@
+{
+  "text": "Het plan sorteert 81k rijen op (p.id, o.id) voor `count(DISTINCT)`, en dat gaat via schijf. Ik vermijd dat door eerst per variant te aggregeren en daarna per product. Zo is de grote sort niet meer nodig.\n\nVoor `order_count` (distinct orders per product) kan ik niet simpelweg per variant optellen, want een order kan meerdere varianten van hetzelfde product bevatten. Daarom bereken ik eerst per (product, order) één rij met de sommen van quantity en revenue en het aantal distinct varianten. `variant_count` kan ook niet worden opgeteld over orders, omdat dezelfde variant in meerdere orders voorkomt. Die tel ik apart.\n\n```sql\nWITH base AS (\n  SELECT pv.product_id,\n         o.id AS order_id,\n         pv.id AS variant_id,\n         ol.quantity,\n         ol.line_total_cents\n    FROM order_lines ol\n    JOIN orders o            ON o.id = ol.order_id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nsums AS (\n  SELECT product_id,\n         count(DISTINCT order_id) AS order_count,\n         sum(quantity)            AS quantity,\n         sum(line_total_cents)    AS revenue_cents\n    FROM base\n   GROUP BY product_id\n),\nvars AS (\n  SELECT product_id, count(*) AS variant_count\n    FROM (SELECT DISTINCT product_id, variant_id FROM base) d\n   GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       s.order_count,\n       s.quantity,\n       s.revenue_cents,\n       v.variant_count\n  FROM sums s\n  JOIN vars v     ON v.product_id = s.product_id\n  JOIN products p ON p.id = s.product_id\n ORDER BY s.quantity DESC, s.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nLet op: dit is een poging tot verbetering. De winst is niet gegarandeerd, omdat `count(DISTINCT order_id)` nog steeds sorteert, maar nu op een smallere rij en zonder de brede productkolommen. De uitkomst blijft identiek. Bij gelijke `quantity` en `revenue_cents` is de volgorde in het origineel ook al niet deterministisch.",
+  "input_tokens": 7365,
+  "output_tokens": 943,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.02416,
+  "usage_raw": {
+    "prompt_tokens": 7365,
+    "completion_tokens": 943,
+    "total_tokens": 8308,
+    "cost": 0.02416,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.02416,
+      "upstream_inference_prompt_cost": 0.01473,
+      "upstream_inference_completions_cost": 0.00943
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 6.9,
+  "sql": "WITH base AS (\n  SELECT pv.product_id,\n         o.id AS order_id,\n         pv.id AS variant_id,\n         ol.quantity,\n         ol.line_total_cents\n    FROM order_lines ol\n    JOIN orders o            ON o.id = ol.order_id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nsums AS (\n  SELECT product_id,\n         count(DISTINCT order_id) AS order_count,\n         sum(quantity)            AS quantity,\n         sum(line_total_cents)    AS revenue_cents\n    FROM base\n   GROUP BY product_id\n),\nvars AS (\n  SELECT product_id, count(*) AS variant_count\n    FROM (SELECT DISTINCT product_id, variant_id FROM base) d\n   GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       s.order_count,\n       s.quantity,\n       s.revenue_cents,\n       v.variant_count\n  FROM sums s\n  JOIN vars v     ON v.product_id = s.product_id\n  JOIN products p ON p.id = s.product_id\n ORDER BY s.quantity DESC, s.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

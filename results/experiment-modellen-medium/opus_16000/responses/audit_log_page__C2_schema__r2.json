@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH p AS (\n    SELECT %(limit)s::bigint + COALESCE(%(offset)s::bigint, 0) AS n\n)\nSELECT u.id, u.tenant_id, u.table_name, u.row_id, u.action,\n       u.old_data, u.new_data, u.actor_id, u.is_system, u.created_at\n  FROM (\n        (SELECT a.*\n           FROM audit_log a\n          WHERE %(row_id)s::uuid IS NOT NULL\n            AND a.row_id = %(row_id)s::uuid\n            AND a.tenant_id = %(tenant_id)s\n            AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s::text)\n            AND a.created_at >= %(from)s\n            AND a.created_at <  %(to)s\n          ORDER BY a.created_at DESC, a.id DESC\n          LIMIT (SELECT n FROM p))\n        UNION ALL\n        (SELECT a.*\n           FROM audit_log a\n          WHERE %(row_id)s::uuid IS NULL\n            AND %(table_name)s::text IS NOT NULL\n            AND a.tenant_id = %(tenant_id)s\n            AND a.table_name = %(table_name)s::text\n            AND a.created_at >= %(from)s\n            AND a.created_at <  %(to)s\n          ORDER BY a.created_at DESC, a.id DESC\n          LIMIT (SELECT n FROM p))\n        UNION ALL\n        (SELECT a.*\n           FROM audit_log a\n          WHERE %(row_id)s::uuid IS NULL\n            AND %(table_name)s::text IS NULL\n            AND a.tenant_id = %(tenant_id)s\n            AND a.created_at >= %(from)s\n            AND a.created_at <  %(to)s\n          ORDER BY a.created_at DESC, a.id DESC\n          LIMIT (SELECT n FROM p))\n       ) u\n ORDER BY u.created_at DESC, u.id DESC\n LIMIT %(limit)s OFFSET %(offset)s\n```\n\nDe `OR ... IS NULL`-filters verhinderen dat de planner (zeker bij generieke plans) de selectieve indexen op `row_id` of `(tenant_id, table_name)` gebruikt. Daarom is de query opgesplitst in drie elkaar uitsluitende takken, elk met een eigen gerichte indexstrategie. Niet-toepasselijke takken worden via een one-time filter direct overgeslagen, en elke tak stopt na `limit + offset` rijen, waarna de buitenste ORDER BY/LIMIT/OFFSET exact dezelfde pagina oplevert.",
+  "input_tokens": 1285,
+  "output_tokens": 1802,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.04118,
+  "usage_raw": {
+    "prompt_tokens": 1285,
+    "completion_tokens": 1802,
+    "total_tokens": 3087,
+    "cost": 0.04118,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.04118,
+      "upstream_inference_prompt_cost": 0.00514,
+      "upstream_inference_completions_cost": 0.03604
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 869,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 16.9,
+  "sql": "WITH p AS (\n    SELECT %(limit)s::bigint + COALESCE(%(offset)s::bigint, 0) AS n\n)\nSELECT u.id, u.tenant_id, u.table_name, u.row_id, u.action,\n       u.old_data, u.new_data, u.actor_id, u.is_system, u.created_at\n  FROM (\n        (SELECT a.*\n           FROM audit_log a\n          WHERE %(row_id)s::uuid IS NOT NULL\n            AND a.row_id = %(row_id)s::uuid\n            AND a.tenant_id = %(tenant_id)s\n            AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s::text)\n            AND a.created_at >= %(from)s\n            AND a.created_at <  %(to)s\n          ORDER BY a.created_at DESC, a.id DESC\n          LIMIT (SELECT n FROM p))\n        UNION ALL\n        (SELECT a.*\n           FROM audit_log a\n          WHERE %(row_id)s::uuid IS NULL\n            AND %(table_name)s::text IS NOT NULL\n            AND a.tenant_id = %(tenant_id)s\n            AND a.table_name = %(table_name)s::text\n            AND a.created_at >= %(from)s\n            AND a.created_at <  %(to)s\n          ORDER BY a.created_at DESC, a.id DESC\n          LIMIT (SELECT n FROM p))\n        UNION ALL\n        (SELECT a.*\n           FROM audit_log a\n          WHERE %(row_id)s::uuid IS NULL\n            AND %(table_name)s::text IS NULL\n            AND a.tenant_id = %(tenant_id)s\n            AND a.created_at >= %(from)s\n            AND a.created_at <  %(to)s\n          ORDER BY a.created_at DESC, a.id DESC\n          LIMIT (SELECT n FROM p))\n       ) u\n ORDER BY u.created_at DESC, u.id DESC\n LIMIT %(limit)s OFFSET %(offset)s",
+  "model": "anthropic/claude-opus-5.5"
+}

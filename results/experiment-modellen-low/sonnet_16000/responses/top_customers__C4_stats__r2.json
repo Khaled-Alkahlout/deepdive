@@ -1,0 +1,33 @@
+{
+  "text": "Het kernprobleem is dat de planner de CTE's `totals` en `last_order` sterk onderschat (rows=1) en daardoor een nested loop kiest met een herberekende HashAggregate per lus. Ik bereken totals en laatste order daarom in één enkele aggregatie, beperkt tot de klanten van de tenant.\n\nLet op de typen: `orders.created_at` is `timestamp without time zone`, dus `max(created_at)` blijft hetzelfde type en de vergelijking met de parameters werkt zoals in het origineel. Een klant zonder geldige orders komt in het origineel ook niet voor (inner join), dus een inner join met de aggregatie geeft dezelfde rijen. De ORDER BY heeft geen tiebreaker, dus de volgorde bij gelijke revenue is ook in het origineel niet gedefinieerd.\n\n```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       a.revenue,\n       a.order_count,\n       a.last_order_at\n  FROM customers c\n  JOIN (\n        SELECT o.customer_id,\n               sum(o.total_cents) AS revenue,\n               count(*)           AS order_count,\n               max(o.created_at)  AS last_order_at\n          FROM orders o\n         WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n           AND o.customer_id IN (SELECT id FROM customers WHERE tenant_id = %(tenant_id)s)\n         GROUP BY o.customer_id\n       ) a ON a.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND a.last_order_at >= %(from)s\n   AND a.last_order_at <  %(to)s\n ORDER BY a.revenue DESC\n LIMIT %(limit)s\n```\n\nTotals en laatste orderdatum komen nu uit één aggregatiepas over `orders`, zonder de gematerialiseerde CTE en zonder de nested loop die 48 miljoen rijen filterde. De tenantfilter op klanten verkleint bovendien de te aggregeren set.",
+  "input_tokens": 5078,
+  "output_tokens": 736,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.017516,
+  "usage_raw": {
+    "prompt_tokens": 5078,
+    "completion_tokens": 736,
+    "total_tokens": 5814,
+    "cost": 0.017516,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.017516,
+      "upstream_inference_prompt_cost": 0.010156,
+      "upstream_inference_completions_cost": 0.00736
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 6.0,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       a.revenue,\n       a.order_count,\n       a.last_order_at\n  FROM customers c\n  JOIN (\n        SELECT o.customer_id,\n               sum(o.total_cents) AS revenue,\n               count(*)           AS order_count,\n               max(o.created_at)  AS last_order_at\n          FROM orders o\n         WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n           AND o.customer_id IN (SELECT id FROM customers WHERE tenant_id = %(tenant_id)s)\n         GROUP BY o.customer_id\n       ) a ON a.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND a.last_order_at >= %(from)s\n   AND a.last_order_at <  %(to)s\n ORDER BY a.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

@@ -1,0 +1,145 @@
+run,model,family,limit,effort,case,condition,rep,verdict,speedup,input_tokens,output_tokens,llm_seconds,stop_reason,cost_reported,cost_usd,category,unchanged
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_products,C1_query,1,EQUIVALENT_NOT_FASTER,1.02,824,1860,8.5,end_turn,0.0010124,0.0010123999999999999,"gelijk, geen winst",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_products,C1_query,2,EQUIVALENT_NOT_FASTER,1.01,824,1636,7.8,end_turn,0.0009004,0.0009004,"gelijk, geen winst",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_products,C1_query,3,EQUIVALENT_NOT_FASTER,0.59,824,2912,12.6,end_turn,0.0015384,0.0015384,"gelijk, trager",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_products,C2_schema,1,EQUIVALENT_NOT_FASTER,0.65,2398,1947,8.7,end_turn,0.0012133,0.0012133,"gelijk, trager",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_products,C2_schema,2,EQUIVALENT_NOT_FASTER,1.02,2398,1946,8.9,end_turn,0.0012128,0.0012128,"gelijk, geen winst",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_products,C2_schema,3,EQUIVALENT_NOT_FASTER,0.67,2398,2248,10.1,end_turn,0.0013638,0.0013637999999999999,"gelijk, trager",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_products,C3_plan,1,EQUIVALENT_NOT_FASTER,0.71,4239,4050,18.9,end_turn,0.0024489,0.0024489,"gelijk, trager",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_products,C3_plan,2,EQUIVALENT_NOT_FASTER,0.61,4239,4944,21.4,end_turn,0.0028959,0.0028959000000000003,"gelijk, trager",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_products,C3_plan,3,EQUIVALENT_NOT_FASTER,0.67,4239,3549,15.8,end_turn,0.0021984,0.0021984,"gelijk, trager",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_products,C4_stats,1,EQUIVALENT_NOT_FASTER,0.56,7365,3889,17.8,end_turn,0.002681,0.002681,"gelijk, trager",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_products,C4_stats,2,EQUIVALENT_NOT_FASTER,0.57,7365,5652,24.7,end_turn,0.0035625,0.0035625,"gelijk, trager",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_products,C4_stats,3,EQUIVALENT_NOT_FASTER,0.68,7365,3436,16.2,end_turn,0.0024545,0.0024545,"gelijk, trager",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_customers,C1_query,1,ACCEPTED,118.34,924,1552,6.6,end_turn,0.0008684,0.0008684,ACCEPTED,False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_customers,C1_query,2,ACCEPTED,186.38,924,1757,7.1,end_turn,0.0009709,0.0009709,ACCEPTED,False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_customers,C1_query,3,EQUIVALENT_NOT_FASTER,0.4,924,1699,8.1,end_turn,0.0009419,0.0009419,"gelijk, trager",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_customers,C2_schema,1,ACCEPTED,124.81,1982,1919,8.6,end_turn,0.0011577,0.0011577,ACCEPTED,False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_customers,C2_schema,2,ACCEPTED,156.67,1982,2245,10.6,end_turn,0.0013207,0.0013207,ACCEPTED,False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_customers,C2_schema,3,ACCEPTED,119.17,1982,1930,8.8,end_turn,0.0011632,0.0011632,ACCEPTED,False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_customers,C3_plan,1,ACCEPTED,158.95,3478,1618,7.5,end_turn,0.0011568,0.0011568,ACCEPTED,False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_customers,C3_plan,2,ACCEPTED,215.04,3478,2513,11.0,end_turn,0.0016043,0.0016043,ACCEPTED,False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_customers,C3_plan,3,ACCEPTED,122.79,3478,2592,11.4,end_turn,0.0016438,0.0016438,ACCEPTED,False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_customers,C4_stats,1,ACCEPTED,195.82,5078,2028,9.1,end_turn,0.0015218,0.0015218,ACCEPTED,False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_customers,C4_stats,2,ACCEPTED,159.89,5078,1708,7.7,end_turn,0.0013618,0.0013618,ACCEPTED,False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,top_customers,C4_stats,3,ACCEPTED,117.62,5078,2032,8.9,end_turn,0.0015238,0.0015237999999999999,ACCEPTED,False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,audit_log_page,C1_query,1,EQUIVALENT_NOT_FASTER,0.93,735,1866,8.6,end_turn,0.0010065,0.0010065,"gelijk, geen winst",False
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,audit_log_page,C1_query,2,EQUIVALENT_NOT_FASTER,0.99,735,1552,7.9,end_turn,0.0008495,0.0008495,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,audit_log_page,C1_query,3,EQUIVALENT_NOT_FASTER,0.87,735,1464,7.2,end_turn,0.0008055,0.0008055,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,audit_log_page,C2_schema,1,EQUIVALENT_NOT_FASTER,1.05,1285,1322,6.7,end_turn,0.0007895,0.0007895,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,audit_log_page,C2_schema,2,EQUIVALENT_NOT_FASTER,1.0,1285,1598,7.8,end_turn,0.0009275,0.0009275,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,audit_log_page,C2_schema,3,EQUIVALENT_NOT_FASTER,1.0,1285,1848,9.3,end_turn,0.0010525,0.0010525,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,audit_log_page,C3_plan,1,EQUIVALENT_NOT_FASTER,1.05,1803,1113,5.4,end_turn,0.0007368,0.0007367999999999999,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,audit_log_page,C3_plan,2,EQUIVALENT_NOT_FASTER,1.07,1803,1159,5.5,end_turn,0.0007598,0.0007597999999999999,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,audit_log_page,C3_plan,3,EQUIVALENT_NOT_FASTER,0.83,1803,1196,5.6,end_turn,0.0007783,0.0007783,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,audit_log_page,C4_stats,1,EQUIVALENT_NOT_FASTER,0.94,3066,1005,4.9,end_turn,0.0008091,0.0008091,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,audit_log_page,C4_stats,2,EQUIVALENT_NOT_FASTER,0.98,3066,1112,5.3,end_turn,0.0008626,0.0008626,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,audit_log_page,C4_stats,3,EQUIVALENT_NOT_FASTER,0.96,3066,1050,5.0,end_turn,0.0008316,0.0008316,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,revenue_orders,C1_query,1,EQUIVALENT_NOT_FASTER,1.02,620,656,3.3,end_turn,0.00039,0.00039,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,revenue_orders,C1_query,2,EQUIVALENT_NOT_FASTER,1.03,620,541,3.2,end_turn,0.0003325,0.0003325,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,revenue_orders,C1_query,3,EQUIVALENT_NOT_FASTER,1.04,620,678,3.7,end_turn,0.000401,0.000401,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,revenue_orders,C2_schema,1,EQUIVALENT_NOT_FASTER,0.99,1297,697,3.6,end_turn,0.0004782,0.0004782,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,revenue_orders,C2_schema,2,EQUIVALENT_NOT_FASTER,1.0,1297,800,4.1,end_turn,0.0005297,0.0005297,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,revenue_orders,C2_schema,3,EQUIVALENT_NOT_FASTER,1.0,1297,689,3.5,end_turn,0.0004742,0.00047420000000000003,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,revenue_orders,C3_plan,1,EQUIVALENT_NOT_FASTER,1.02,1788,984,5.0,end_turn,0.0006708,0.0006707999999999999,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,revenue_orders,C3_plan,2,EQUIVALENT_NOT_FASTER,1.04,1788,763,3.7,end_turn,0.0005603,0.0005602999999999999,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,revenue_orders,C3_plan,3,EQUIVALENT_NOT_FASTER,0.96,1788,659,3.5,end_turn,0.0005083,0.0005083,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,revenue_orders,C4_stats,1,EQUIVALENT_NOT_FASTER,1.02,2339,753,4.1,end_turn,0.0006104,0.0006104,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,revenue_orders,C4_stats,2,EQUIVALENT_NOT_FASTER,1.08,2339,987,5.1,end_turn,0.0007274,0.0007274,ongewijzigd,True
+haiku_16000,anthropic/claude-haiku-5.5,haiku,16000,medium,revenue_orders,C4_stats,3,EQUIVALENT_NOT_FASTER,0.98,2339,928,4.7,end_turn,0.0006979,0.0006979,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_products,C1_query,1,EQUIVALENT_NOT_FASTER,0.61,824,1612,17.1,end_turn,0.035536,0.035536,"gelijk, trager",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_products,C1_query,2,EQUIVALENT_NOT_FASTER,0.58,824,1303,13.9,end_turn,0.029356,0.029356,"gelijk, trager",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_products,C1_query,3,EQUIVALENT_NOT_FASTER,0.51,824,1988,20.7,end_turn,0.043056,0.043056,"gelijk, trager",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_products,C2_schema,1,EQUIVALENT_NOT_FASTER,0.52,2398,1871,18.9,end_turn,0.047012,0.047012,"gelijk, trager",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_products,C2_schema,2,EQUIVALENT_NOT_FASTER,0.67,2398,1691,16.1,end_turn,0.043412,0.043412,"gelijk, trager",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_products,C2_schema,3,EQUIVALENT_NOT_FASTER,0.67,2398,1422,13.7,end_turn,0.038032,0.038032,"gelijk, trager",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_products,C3_plan,1,EQUIVALENT_NOT_FASTER,0.57,4239,2283,21.5,end_turn,0.062616,0.062616,"gelijk, trager",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_products,C3_plan,2,EQUIVALENT_NOT_FASTER,0.46,4239,2049,19.4,end_turn,0.057936,0.057936,"gelijk, trager",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_products,C3_plan,3,EQUIVALENT_NOT_FASTER,0.67,4239,2063,21.3,end_turn,0.058216,0.058216,"gelijk, trager",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_products,C4_stats,1,EQUIVALENT_NOT_FASTER,0.48,7365,2403,23.4,end_turn,0.07752,0.07752,"gelijk, trager",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_products,C4_stats,2,EQUIVALENT_NOT_FASTER,0.64,7365,2276,22.2,end_turn,0.07498,0.07498,"gelijk, trager",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_products,C4_stats,3,EQUIVALENT_NOT_FASTER,0.57,7365,2093,20.2,end_turn,0.07132,0.07132,"gelijk, trager",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_customers,C1_query,1,ACCEPTED,197.13,924,1342,13.1,end_turn,0.030536,0.030536,ACCEPTED,False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_customers,C1_query,2,ACCEPTED,182.23,924,1446,14.2,end_turn,0.032616,0.032616,ACCEPTED,False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_customers,C1_query,3,ACCEPTED,195.97,924,1370,13.9,end_turn,0.031096,0.031096,ACCEPTED,False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_customers,C2_schema,1,ACCEPTED,210.26,1982,1365,13.1,end_turn,0.035228,0.035228,ACCEPTED,False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_customers,C2_schema,2,ACCEPTED,221.31,1982,1074,10.8,end_turn,0.029408,0.029408,ACCEPTED,False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_customers,C2_schema,3,ACCEPTED,195.48,1982,1356,13.4,end_turn,0.035048,0.035048,ACCEPTED,False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_customers,C3_plan,1,ACCEPTED,161.08,3478,1139,11.5,end_turn,0.036692,0.036692,ACCEPTED,False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_customers,C3_plan,2,ACCEPTED,163.22,3478,1046,10.2,end_turn,0.034832,0.034832,ACCEPTED,False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_customers,C3_plan,3,ACCEPTED,218.76,3478,838,8.7,end_turn,0.030672,0.030672,ACCEPTED,False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_customers,C4_stats,1,ACCEPTED,220.06,5078,1041,10.6,end_turn,0.041132,0.041132,ACCEPTED,False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_customers,C4_stats,2,ACCEPTED,213.02,5078,975,9.7,end_turn,0.039812,0.039812,ACCEPTED,False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,top_customers,C4_stats,3,ACCEPTED,217.14,5078,973,11.0,end_turn,0.039772,0.039772,ACCEPTED,False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,audit_log_page,C1_query,1,EQUIVALENT_NOT_FASTER,0.97,735,2150,19.7,end_turn,0.04594,0.04594,"gelijk, geen winst",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,audit_log_page,C1_query,2,EQUIVALENT_NOT_FASTER,0.97,735,1121,12.4,end_turn,0.02536,0.02536,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,audit_log_page,C1_query,3,EQUIVALENT_NOT_FASTER,1.02,735,1092,11.6,end_turn,0.02478,0.02478,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,audit_log_page,C2_schema,1,EQUIVALENT_NOT_FASTER,1.0,1285,868,9.0,end_turn,0.0225,0.0225,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,audit_log_page,C2_schema,2,EQUIVALENT_NOT_FASTER,1.03,1285,1802,16.9,end_turn,0.04118,0.04118,"gelijk, geen winst",False
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,audit_log_page,C2_schema,3,EQUIVALENT_NOT_FASTER,1.1,1285,1098,11.5,end_turn,0.0271,0.0271,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,audit_log_page,C3_plan,1,EQUIVALENT_NOT_FASTER,1.04,1803,643,6.7,end_turn,0.020072,0.020072,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,audit_log_page,C3_plan,2,EQUIVALENT_NOT_FASTER,0.95,1803,669,7.1,end_turn,0.020592,0.020592,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,audit_log_page,C3_plan,3,EQUIVALENT_NOT_FASTER,0.89,1803,699,7.2,end_turn,0.021192,0.021192,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,audit_log_page,C4_stats,1,EQUIVALENT_NOT_FASTER,1.0,3066,901,9.2,end_turn,0.030284,0.030284,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,audit_log_page,C4_stats,2,EQUIVALENT_NOT_FASTER,1.01,3066,713,7.3,end_turn,0.026524,0.026524,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,audit_log_page,C4_stats,3,EQUIVALENT_NOT_FASTER,1.03,3066,612,6.4,end_turn,0.024504,0.024504,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,revenue_orders,C1_query,1,EQUIVALENT_NOT_FASTER,0.99,620,476,5.3,end_turn,0.012,0.012,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,revenue_orders,C1_query,2,EQUIVALENT_NOT_FASTER,1.03,620,469,5.7,end_turn,0.01186,0.01186,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,revenue_orders,C1_query,3,EQUIVALENT_NOT_FASTER,1.01,620,507,6.0,end_turn,0.01262,0.01262,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,revenue_orders,C2_schema,1,EQUIVALENT_NOT_FASTER,1.0,1297,588,6.5,end_turn,0.016948,0.016948,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,revenue_orders,C2_schema,2,EQUIVALENT_NOT_FASTER,0.97,1297,618,6.7,end_turn,0.017548,0.017548,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,revenue_orders,C2_schema,3,EQUIVALENT_NOT_FASTER,1.04,1297,584,6.4,end_turn,0.016868,0.016868,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,revenue_orders,C3_plan,1,EQUIVALENT_NOT_FASTER,1.0,1788,496,5.7,end_turn,0.017072,0.017072,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,revenue_orders,C3_plan,2,EQUIVALENT_NOT_FASTER,1.0,1788,480,5.5,end_turn,0.016752,0.016752,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,revenue_orders,C3_plan,3,EQUIVALENT_NOT_FASTER,1.02,1788,533,6.1,end_turn,0.017812,0.017812,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,revenue_orders,C4_stats,1,EQUIVALENT_NOT_FASTER,1.0,2339,524,5.9,end_turn,0.019836,0.019836,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,revenue_orders,C4_stats,2,EQUIVALENT_NOT_FASTER,1.01,2339,480,5.7,end_turn,0.018956,0.018956,ongewijzigd,True
+opus_16000,anthropic/claude-opus-5.5,opus,16000,medium,revenue_orders,C4_stats,3,EQUIVALENT_NOT_FASTER,0.92,2339,583,6.4,end_turn,0.021016,0.021016,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_products,C1_query,1,EQUIVALENT_NOT_FASTER,1.01,824,654,4.9,end_turn,0.008188,0.008188,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_products,C1_query,2,EQUIVALENT_NOT_FASTER,1.03,824,991,7.7,end_turn,0.011558,0.011558,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_products,C1_query,3,EQUIVALENT_NOT_FASTER,0.98,824,703,5.3,end_turn,0.008678,0.008678,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_products,C2_schema,1,EQUIVALENT_NOT_FASTER,0.66,2398,1022,8.6,end_turn,0.015016,0.015016,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_products,C2_schema,2,EQUIVALENT_NOT_FASTER,0.66,2398,971,7.1,end_turn,0.014506,0.014506,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_products,C2_schema,3,EQUIVALENT_NOT_FASTER,0.65,2398,797,5.9,end_turn,0.012766,0.012766,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_products,C3_plan,1,EQUIVALENT_NOT_FASTER,0.66,4239,882,6.6,end_turn,0.017298,0.017298,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_products,C3_plan,2,EQUIVALENT_NOT_FASTER,0.64,4239,863,6.2,end_turn,0.017108,0.017108,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_products,C3_plan,3,EQUIVALENT_NOT_FASTER,0.43,4239,1045,7.4,end_turn,0.018928,0.018928,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_products,C4_stats,1,EQUIVALENT_NOT_FASTER,0.62,7365,995,7.4,end_turn,0.02468,0.02468,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_products,C4_stats,2,EQUIVALENT_NOT_FASTER,0.56,7365,990,7.7,end_turn,0.02463,0.02463,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_products,C4_stats,3,EQUIVALENT_NOT_FASTER,0.68,7365,915,7.3,end_turn,0.02388,0.02388,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_customers,C1_query,1,EQUIVALENT_NOT_FASTER,0.31,924,692,5.5,end_turn,0.008768,0.008768,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_customers,C1_query,2,EQUIVALENT_NOT_FASTER,0.34,924,664,5.4,end_turn,0.008488,0.008488,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_customers,C1_query,3,EQUIVALENT_NOT_FASTER,0.35,924,582,4.9,end_turn,0.007668,0.007668,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_customers,C2_schema,1,EQUIVALENT_NOT_FASTER,0.37,1982,707,5.9,end_turn,0.011034,0.011034,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_customers,C2_schema,2,EQUIVALENT_NOT_FASTER,0.4,1982,728,6.1,end_turn,0.011244,0.011244,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_customers,C2_schema,3,EQUIVALENT_NOT_FASTER,0.43,1982,698,5.9,end_turn,0.010944,0.010944,"gelijk, trager",False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_customers,C3_plan,1,ACCEPTED,156.38,3478,712,6.0,end_turn,0.014076,0.014076,ACCEPTED,False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_customers,C3_plan,2,ACCEPTED,193.54,3478,706,6.0,end_turn,0.014016,0.014016,ACCEPTED,False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_customers,C3_plan,3,ACCEPTED,151.61,3478,699,6.2,end_turn,0.013946,0.013946,ACCEPTED,False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_customers,C4_stats,1,ACCEPTED,194.02,5078,664,5.8,end_turn,0.016796,0.016796,ACCEPTED,False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_customers,C4_stats,2,ACCEPTED,158.66,5078,638,5.6,end_turn,0.016536,0.016536,ACCEPTED,False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,top_customers,C4_stats,3,ACCEPTED,188.81,5078,737,6.0,end_turn,0.017526,0.017526,ACCEPTED,False
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,audit_log_page,C1_query,1,EQUIVALENT_NOT_FASTER,0.99,735,753,6.1,end_turn,0.009,0.009,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,audit_log_page,C1_query,2,EQUIVALENT_NOT_FASTER,0.94,735,584,4.8,end_turn,0.00731,0.00731,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,audit_log_page,C1_query,3,EQUIVALENT_NOT_FASTER,0.87,735,610,5.0,end_turn,0.00757,0.00757,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,audit_log_page,C2_schema,1,EQUIVALENT_NOT_FASTER,0.99,1285,598,4.5,end_turn,0.00855,0.00855,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,audit_log_page,C2_schema,2,EQUIVALENT_NOT_FASTER,0.94,1285,569,4.4,end_turn,0.00826,0.00826,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,audit_log_page,C2_schema,3,EQUIVALENT_NOT_FASTER,0.97,1285,716,6.0,end_turn,0.00973,0.00973,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,audit_log_page,C3_plan,1,EQUIVALENT_NOT_FASTER,1.02,1803,537,4.5,end_turn,0.008976,0.008976,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,audit_log_page,C3_plan,2,EQUIVALENT_NOT_FASTER,1.13,1803,488,3.6,end_turn,0.008486,0.008486,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,audit_log_page,C3_plan,3,EQUIVALENT_NOT_FASTER,1.0,1803,538,4.1,end_turn,0.008986,0.008986,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,audit_log_page,C4_stats,1,EQUIVALENT_NOT_FASTER,0.99,3066,472,4.0,end_turn,0.010852,0.010852,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,audit_log_page,C4_stats,2,EQUIVALENT_NOT_FASTER,1.01,3066,443,3.4,end_turn,0.010562,0.010562,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,audit_log_page,C4_stats,3,EQUIVALENT_NOT_FASTER,1.0,3066,539,4.2,end_turn,0.011522,0.011522,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,revenue_orders,C1_query,1,EQUIVALENT_NOT_FASTER,1.0,620,287,3.0,end_turn,0.00411,0.00411,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,revenue_orders,C1_query,2,EQUIVALENT_NOT_FASTER,1.0,620,283,2.6,end_turn,0.00407,0.00407,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,revenue_orders,C1_query,3,EQUIVALENT_NOT_FASTER,0.85,620,305,3.0,end_turn,0.00429,0.00429,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,revenue_orders,C2_schema,1,EQUIVALENT_NOT_FASTER,0.99,1297,305,2.9,end_turn,0.005644,0.005644,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,revenue_orders,C2_schema,2,EQUIVALENT_NOT_FASTER,1.02,1297,288,2.8,end_turn,0.005474,0.005474,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,revenue_orders,C2_schema,3,EQUIVALENT_NOT_FASTER,0.99,1297,295,2.8,end_turn,0.005544,0.005544,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,revenue_orders,C3_plan,1,EQUIVALENT_NOT_FASTER,1.01,1788,328,2.9,end_turn,0.006856,0.006856,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,revenue_orders,C3_plan,2,EQUIVALENT_NOT_FASTER,1.0,1788,293,2.8,end_turn,0.006506,0.006506,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,revenue_orders,C3_plan,3,EQUIVALENT_NOT_FASTER,0.99,1788,418,3.5,end_turn,0.007756,0.007756,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,revenue_orders,C4_stats,1,EQUIVALENT_NOT_FASTER,1.01,2339,390,3.4,end_turn,0.008578,0.008578,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,revenue_orders,C4_stats,2,EQUIVALENT_NOT_FASTER,0.99,2339,338,3.4,end_turn,0.008058,0.008058,ongewijzigd,True
+sonnet_16000,anthropic/claude-sonnet-5.5,sonnet,16000,medium,revenue_orders,C4_stats,3,EQUIVALENT_NOT_FASTER,0.99,2339,403,3.6,end_turn,0.008708,0.008708,ongewijzigd,True

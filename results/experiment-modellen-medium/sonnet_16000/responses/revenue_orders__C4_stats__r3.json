@@ -1,0 +1,33 @@
+{
+  "text": "Er is geen zinvolle herschrijving mogelijk zonder indexen of schemawijzigingen. De query is al eenvoudig en geeft geen ORDER BY, dus de volgorde is niet gespecificeerd. De planner gebruikt een bitmap scan op tenant_id en leest 23.610 van de 26.264 rijen als resultaat (ongeveer 90% selectiviteit). Een herschrijving kan daar niets aan verbeteren; de uitvoeringstijd van ~10 ms wordt vooral bepaald door het aantal geretourneerde rijen.\n\n```sql\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nIk heb de query ongewijzigd teruggegeven, omdat de beschikbare indexen en het grote aandeel matchende rijen geen betere toegangsroute toelaten.",
+  "input_tokens": 2339,
+  "output_tokens": 403,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.008708,
+  "usage_raw": {
+    "prompt_tokens": 2339,
+    "completion_tokens": 403,
+    "total_tokens": 2742,
+    "cost": 0.008708,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.008708,
+      "upstream_inference_prompt_cost": 0.004678,
+      "upstream_inference_completions_cost": 0.00403
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 3.6,
+  "sql": "SELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-sonnet-5.5"
+}

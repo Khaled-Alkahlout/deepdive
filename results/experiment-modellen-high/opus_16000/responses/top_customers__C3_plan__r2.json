@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents)  AS revenue,\n       count(*)            AS order_count,\n       max(o.created_at)   AS last_order_at\n  FROM customers c\n  JOIN orders o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s\n```\n\nDe oorspronkelijke query rekende twee aparte aggregaties uit over een gematerialiseerde CTE. Doordat de planner verkeerde schattingen maakte, koppelde hij die met een nested loop van zo'n 48 miljoen vergelijkingen. Deze versie haalt omzet, aantal orders en laatste orderdatum (`max(created_at)` is gelijk aan de `DISTINCT ON … ORDER BY created_at DESC`) in één aggregatie op, alleen voor klanten van de tenant, en filtert het tijdvenster in `HAVING`. De kolomnamen, types en de sortering op omzet blijven gelijk, dus het resultaat is identiek.",
+  "input_tokens": 3478,
+  "output_tokens": 1105,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.036012,
+  "usage_raw": {
+    "prompt_tokens": 3478,
+    "completion_tokens": 1105,
+    "total_tokens": 4583,
+    "cost": 0.036012,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.036012,
+      "upstream_inference_prompt_cost": 0.013912,
+      "upstream_inference_completions_cost": 0.0221
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 619,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 11.0,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents)  AS revenue,\n       count(*)            AS order_count,\n       max(o.created_at)   AS last_order_at\n  FROM customers c\n  JOIN orders o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

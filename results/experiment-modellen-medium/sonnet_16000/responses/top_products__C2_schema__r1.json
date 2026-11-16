@@ -1,0 +1,33 @@
+{
+  "text": "Het grootste kostenpunt is de join van veel orderregels met varianten en producten, gevolgd door een GROUP BY op vijf kolommen (waaronder tekstkolommen) en count(DISTINCT). Ik aggregeer daarom eerst per variant (pv.id) en daarna per product, zodat de join met products en de brede groepering pas op een kleine set gebeuren.\n\nLet op de details voor identieke uitkomsten:\n- `count(DISTINCT o.id)` is niet op te tellen over varianten heen (een order kan meerdere varianten van hetzelfde product bevatten). Die moet dus op productniveau berekend blijven.\n- Daarom bereken ik eerst een gefilterde set van (product_id, variant_id, order_id, quantity, line_total) en aggregeer daarna per product. Dat bespaart vooral de brede GROUP BY op tekstkolommen: groeperen op p.id volstaat, omdat id de primary key is.\n- De cast `ol.variant_id::uuid` houd ik exact gelijk, zodat het foutgedrag bij ongeldige waarden hetzelfde blijft.\n\n```sql\nWITH f AS (\n  SELECT pv.product_id,\n         pv.id AS variant_id,\n         o.id  AS order_id,\n         ol.quantity,\n         ol.line_total_cents\n    FROM orders o\n    JOIN order_lines ol      ON ol.order_id = o.id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n), agg AS (\n  SELECT product_id,\n         count(DISTINCT order_id)   AS order_count,\n         sum(quantity)              AS quantity,\n         sum(line_total_cents)      AS revenue_cents,\n         count(DISTINCT variant_id) AS variant_count\n    FROM f\n   GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDoor eerst per product te aggregeren op alleen de uuid, hoeft de GROUP BY niet meer op vijf (tekst)kolommen te werken en wordt products pas gejoind op de al kleine aggregatie. De filters op orders blijven gelijk, dus het resultaat is identiek, inclusief de ORDER BY. Gelijke scores in de ORDER BY blijven net als in het origineel in niet-gedefinieerde volgorde.",
+  "input_tokens": 2398,
+  "output_tokens": 1022,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.015016,
+  "usage_raw": {
+    "prompt_tokens": 2398,
+    "completion_tokens": 1022,
+    "total_tokens": 3420,
+    "cost": 0.015016,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.015016,
+      "upstream_inference_prompt_cost": 0.004796,
+      "upstream_inference_completions_cost": 0.01022
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 8.6,
+  "sql": "WITH f AS (\n  SELECT pv.product_id,\n         pv.id AS variant_id,\n         o.id  AS order_id,\n         ol.quantity,\n         ol.line_total_cents\n    FROM orders o\n    JOIN order_lines ol      ON ol.order_id = o.id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n), agg AS (\n  SELECT product_id,\n         count(DISTINCT order_id)   AS order_count,\n         sum(quantity)              AS quantity,\n         sum(line_total_cents)      AS revenue_cents,\n         count(DISTINCT variant_id) AS variant_count\n    FROM f\n   GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

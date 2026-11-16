@@ -1,0 +1,33 @@
+{
+  "text": "Het huidige plan is al optimaal: het gebruikt `audit_log_tenant_created_at_idx` achterwaarts en leest maar ~200 rijen met een incremental sort. De uitvoeringstijd is 0,2 ms. Een herschrijving, bijvoorbeeld met UNION ALL per filtervariant, geeft geen zinvolle winst en brengt risico mee voor de semantiek (NULL-vergelijkingen, de volgorde en de generieke plannen). Daarom geef ik de originele query ongewijzigd terug.\n\n```sql\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s\n```\n\nHet plan draait al in 0,2 ms via een backward index scan op (tenant_id, created_at), en de LIMIT stopt vroegtijdig. Zonder nieuwe indexen is er geen zinvolle verbetering mogelijk.",
+  "input_tokens": 1803,
+  "output_tokens": 546,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.009066,
+  "usage_raw": {
+    "prompt_tokens": 1803,
+    "completion_tokens": 546,
+    "total_tokens": 2349,
+    "cost": 0.009066,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.009066,
+      "upstream_inference_prompt_cost": 0.003606,
+      "upstream_inference_completions_cost": 0.00546
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 4.5,
+  "sql": "SELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

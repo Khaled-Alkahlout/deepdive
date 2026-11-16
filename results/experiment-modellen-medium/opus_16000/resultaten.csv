@@ -1,0 +1,1218 @@
+﻿query;context;herhaling;model;aanbieder;effort;max_uitvoertokens;duur_origineel_ms;duur_kandidaat_ms;versnelling_x;oordeel;aantal_parametersets;parametersets_met_verschil;reden_afkeuring;invoertokens;uitvoertokens;stopreden;modeltijd_s;kosten_usd;query_ongewijzigd;aantal_metingen;spreiding_origineel_ms;spreiding_kandidaat_ms;sql_kandidaat
+top_products;C1 query;1;anthropic/claude-opus-5.5;openrouter;medium;16000;150,1;246,4;0,61;ZELFDE RESULTAAT, NIET SNELLER;8;0;;824;1612;klaar;17,1;0,03554;nee;7;12,1;8,2;"WITH agg AS (
+    SELECT pv.product_id,
+           count(DISTINCT o.id)        AS order_count,
+           sum(ol.quantity)            AS quantity,
+           sum(ol.line_total_cents)    AS revenue_cents,
+           count(DISTINCT pv.id)       AS variant_count
+      FROM orders o
+      JOIN order_lines ol      ON ol.order_id = o.id
+      JOIN product_variants pv ON pv.id = ol.variant_id::uuid
+     WHERE o.tenant_id = %(tenant_id)s
+       AND o.created_at >= %(from)s
+       AND o.created_at <  %(to)s
+       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+       AND EXISTS (SELECT 1 FROM products p0 WHERE p0.id = pv.product_id)
+     GROUP BY pv.product_id
+)
+SELECT p.id,
+       p.sku,
+       p.name,
+       p.brand,
+       p.currency,
+       a.order_count,
+       a.quantity,
+       a.revenue_cents,
+       a.variant_count
+  FROM agg a
+  JOIN products p ON p.id = a.product_id
+ ORDER BY a.quantity DESC, a.revenue_cents DESC
+ LIMIT %(limit)s"
+top_products;C1 query;2;anthropic/claude-opus-5.5;openrouter;medium;16000;187,5;322,3;0,58;ZELFDE RESULTAAT, NIET SNELLER;8;0;;824;1303;klaar;13,9;0,02936;nee;7;20,4;31,4;"WITH agg AS (
+    SELECT pv.product_id,
+           count(DISTINCT o.id)     AS order_count,
+           sum(ol.quantity)         AS quantity,
+           sum(ol.line_total_cents) AS revenue_cents,
+           count(DISTINCT pv.id)    AS variant_count
+      FROM orders o
+      JOIN order_lines ol      ON ol.order_id = o.id
+      JOIN product_variants pv ON pv.id = ol.variant_id::uuid
+     WHERE o.tenant_id = %(tenant_id)s
+       AND o.created_at >= %(from)s
+       AND o.created_at <  %(to)s
+       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+     GROUP BY pv.product_id
+)
+SELECT p.id,
+       p.sku,
+       p.name,
+       p.brand,
+       p.currency,
+       a.order_count,
+       a.quantity,
+       a.revenue_cents,
+       a.variant_count
+  FROM agg a
+  JOIN products p ON p.id = a.product_id
+ ORDER BY a.quantity DESC, a.revenue_cents DESC
+ LIMIT %(limit)s"
+top_products;C1 query;3;anthropic/claude-opus-5.5;openrouter;medium;16000;148,9;290,6;0,51;ZELFDE RESULTAAT, NIET SNELLER;8;0;;824;1988;klaar;20,7;0,04306;nee;7;14,7;9,1;"WITH filtered_orders AS MATERIALIZED (
+    SELECT o.id
+      FROM orders o
+     WHERE o.tenant_id = %(tenant_id)s
+       AND o.created_at >= %(from)s
+       AND o.created_at <  %(to)s
+       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+),
+lines AS MATERIALIZED (
+    SELECT ol.order_id,
+           ol.variant_id::uuid AS variant_uuid,
+           ol.quantity,
+           ol.line_total_cents
+      FROM filtered_orders fo
+      JOIN order_lines ol ON ol.order_id = fo.id
+)
+SELECT p.id,
+       p.sku,
+       p.name,
+       p.brand,
+       p.currency,
+       count(DISTINCT l.order_id)  AS order_count,
+       sum(l.quantity)             AS quantity,
+       sum(l.line_total_cents)     AS revenue_cents,
+       count(DISTINCT pv.id)       AS variant_count
+  FROM lines l
+  JOIN product_variants pv ON pv.id = l.variant_uuid
+  JOIN products p          ON p.id = pv.product_id
+ GROUP BY p.id, p.sku, p.name, p.brand, p.currency
+ ORDER BY quantity DESC, revenue_cents DESC
+ LIMIT %(limit)s"
+top_products;C2 schema;1;anthropic/claude-opus-5.5;openrouter;medium;16000;151,7;289,9;0,52;ZELFDE RESULTAAT, NIET SNELLER;8;0;;2398;1871;klaar;18,9;0,04701;nee;7;7,1;4,6;"WITH ol_agg AS (
+    SELECT ol.order_id,
+           ol.variant_id,
+           sum(ol.quantity)         AS qty,
+           sum(ol.line_total_cents) AS rev
+      FROM order_lines ol
+     WHERE ol.order_id IN (
+             SELECT o.id
+               FROM orders o
+              WHERE o.tenant_id = %(tenant_id)s
+                AND o.created_at >= %(from)s
+                AND o.created_at <  %(to)s
+                AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+           )
+     GROUP BY ol.order_id, ol.variant_id
+),
+per_product AS (
+    SELECT pv.product_id,
+           count(DISTINCT a.order_id) AS order_count,
+           sum(a.qty)::bigint         AS quantity,
+           sum(a.rev)                 AS revenue_cents,
+           count(DISTINCT pv.id)      AS variant_count
+      FROM ol_agg a
+      JOIN product_variants pv ON pv.id = a.variant_id::uuid
+     GROUP BY pv.product_id
+     ORDER BY quantity DESC, revenue_cents DESC
+     LIMIT %(limit)s
+)
+SELECT p.id,
+       p.sku,
+       p.name,
+       p.brand,
+       p.currency,
+       pp.order_count,
+       pp.quantity,
+       pp.revenue_cents,
+       pp.variant_count
+  FROM per_product pp
+  JOIN products p ON p.id = pp.product_id
+ ORDER BY pp.quantity DESC, pp.revenue_cents DESC"
+top_products;C2 schema;2;anthropic/claude-opus-5.5;openrouter;medium;16000;151,4;226,8;0,67;ZELFDE RESULTAAT, NIET SNELLER;8;0;;2398;1691;klaar;16,1;0,04341;nee;7;11,0;3,3;"WITH agg AS (
+    SELECT pv.product_id,
+           count(DISTINCT ol.order_id) AS order_count,
+           sum(ol.quantity)            AS quantity,
+           sum(ol.line_total_cents)    AS revenue_cents,
+           count(DISTINCT pv.id)       AS variant_count
+      FROM orders o
+      JOIN order_lines ol      ON ol.order_id = o.id
+      JOIN product_variants pv ON pv.id = ol.variant_id::uuid
+     WHERE o.tenant_id = %(tenant_id)s
+       AND o.created_at >= %(from)s
+       AND o.created_at <  %(to)s
+       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+     GROUP BY pv.product_id
+     ORDER BY quantity DESC, revenue_cents DESC
+     LIMIT %(limit)s
+)
+SELECT p.id,
+       p.sku,
+       p.name,
+       p.brand,
+       p.currency,
+       a.order_count,
+       a.quantity,
+       a.revenue_cents,
+       a.variant_count
+  FROM agg a
+  JOIN products p ON p.id = a.product_id
+ ORDER BY a.quantity DESC, a.revenue_cents DESC"
+top_products;C2 schema;3;anthropic/claude-opus-5.5;openrouter;medium;16000;156,5;234,4;0,67;ZELFDE RESULTAAT, NIET SNELLER;8;0;;2398;1422;klaar;13,7;0,03803;nee;7;26,8;28,8;"WITH agg AS (
+    SELECT pv.product_id,
+           count(DISTINCT o.id)     AS order_count,
+           sum(ol.quantity)         AS quantity,
+           sum(ol.line_total_cents) AS revenue_cents,
+           count(DISTINCT pv.id)    AS variant_count
+      FROM orders o
+      JOIN order_lines ol      ON ol.order_id = o.id
+      JOIN product_variants pv ON pv.id = ol.variant_id::uuid
+     WHERE o.tenant_id = %(tenant_id)s
+       AND o.created_at >= %(from)s
+       AND o.created_at <  %(to)s
+       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+     GROUP BY pv.product_id
+)
+SELECT p.id,
+       p.sku,
+       p.name,
+       p.brand,
+       p.currency,
+       a.order_count,
+       a.quantity,
+       a.revenue_cents,
+       a.variant_count
+  FROM agg a
+  JOIN products p ON p.id = a.product_id
+ ORDER BY a.quantity DESC, a.revenue_cents DESC
+ LIMIT %(limit)s"
+top_products;C3 plan;1;anthropic/claude-opus-5.5;openrouter;medium;16000;152,9;270,2;0,57;ZELFDE RESULTAAT, NIET SNELLER;8;0;;4239;2283;klaar;21,5;0,06262;nee;7;6,2;14,3;"WITH lv AS (
+    SELECT pv.product_id,
+           ol.order_id,
+           pv.id               AS variant_id,
+           ol.quantity,
+           ol.line_total_cents
+      FROM order_lines ol
+      JOIN orders o            ON o.id = ol.order_id
+      JOIN product_variants pv ON pv.id = ol.variant_id::uuid
+     WHERE o.tenant_id = %(tenant_id)s
+       AND o.created_at >= %(from)s
+       AND o.created_at <  %(to)s
+       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+),
+po AS (
+    SELECT product_id,
+           order_id,
+           sum(quantity)         AS q,
+           sum(line_total_cents) AS r
+      FROM lv
+     GROUP BY product_id, order_id
+),
+pa AS (
+    SELECT product_id,
+           count(*)          AS order_count,
+           sum(q)::bigint    AS quantity,
+           sum(r)            AS revenue_cents
+      FROM po
+     GROUP BY product_id
+),
+pvc AS (
+    SELECT product_id,
+           count(*) AS variant_count
+      FROM (SELECT DISTINCT product_id, variant_id FROM lv) s
+     GROUP BY product_id
+)
+SELECT p.id,
+       p.sku,
+       p.name,
+       p.brand,
+       p.currency,
+       pa.order_count,
+       pa.quantity,
+       pa.revenue_cents,
+       pvc.variant_count
+  FROM pa
+  JOIN pvc       ON pvc.product_id = pa.product_id
+  JOIN products p ON p.id = pa.product_id
+ ORDER BY pa.quantity DESC, pa.revenue_cents DESC
+ LIMIT %(limit)s"
+top_products;C3 plan;2;anthropic/claude-opus-5.5;openrouter;medium;16000;156,0;339,7;0,46;ZELFDE RESULTAAT, NIET SNELLER;8;0;;4239;2049;klaar;19,4;0,05794;nee;7;9,3;9,5;"WITH l AS MATERIALIZED (
+    SELECT pv.product_id,
+           ol.order_id,
+           pv.id AS variant_id,
+           ol.quantity,
+           ol.line_total_cents
+      FROM order_lines ol
+      JOIN orders o            ON o.id = ol.order_id
+      JOIN product_variants pv ON pv.id = ol.variant_id::uuid
+     WHERE o.tenant_id = %(tenant_id)s
+       AND o.created_at >= %(from)s
+       AND o.created_at <  %(to)s
+       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+),
+s AS (
+    SELECT product_id,
+           sum(quantity)         AS quantity,
+           sum(line_total_cents) AS revenue_cents
+      FROM l
+     GROUP BY product_id
+),
+oc AS (
+    SELECT product_id, count(*) AS order_count
+      FROM (SELECT product_id, order_id FROM l GROUP BY product_id, order_id) x
+     GROUP BY product_id
+),
+vc AS (
+    SELECT product_id, count(*) AS variant_count
+      FROM (SELECT product_id, variant_id FROM l GROUP BY product_id, variant_id) y
+     GROUP BY product_id
+)
+SELECT p.id,
+       p.sku,
+       p.name,
+       p.brand,
+       p.currency,
+       oc.order_count,
+       s.quantity,
+       s.revenue_cents,
+       vc.variant_count
+  FROM s
+  JOIN products p ON p.id = s.product_id
+  JOIN oc         ON oc.product_id = s.product_id
+  JOIN vc         ON vc.product_id = s.product_id
+ ORDER BY quantity DESC, revenue_cents DESC
+ LIMIT %(limit)s"
+top_products;C3 plan;3;anthropic/claude-opus-5.5;openrouter;medium;16000;154,5;231,1;0,67;ZELFDE RESULTAAT, NIET SNELLER;8;0;;4239;2063;klaar;21,3;0,05822;nee;7;23,3;22,2;"WITH agg AS (
+    SELECT pv.product_id,
+           count(DISTINCT o.id)        AS order_count,
+           sum(ol.quantity)            AS quantity,
+           sum(ol.line_total_cents)    AS revenue_cents,
+           count(DISTINCT pv.id)       AS variant_count
+      FROM order_lines ol
+      JOIN orders o           ON o.id = ol.order_id
+      JOIN product_variants pv ON pv.id = ol.variant_id::uuid
+     WHERE o.tenant_id = %(tenant_id)s
+       AND o.created_at >= %(from)s
+       AND o.created_at <  %(to)s
+       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+     GROUP BY pv.product_id
+     ORDER BY quantity DESC, revenue_cents DESC
+     LIMIT %(limit)s
+)
+SELECT p.id,
+       p.sku,
+       p.name,
+       p.brand,
+       p.currency,
+       a.order_count,
+       a.quantity,
+       a.revenue_cents,
+       a.variant_count
+  FROM agg a
+  JOIN products p ON p.id = a.product_id
+ ORDER BY a.quantity DESC, a.revenue_cents DESC"
+top_products;C4 statistieken;1;anthropic/claude-opus-5.5;openrouter;medium;16000;156,9;326,8;0,48;ZELFDE RESULTAAT, NIET SNELLER;8;0;;7365;2403;klaar;23,4;0,07752;nee;7;9,5;8,9;"WITH base AS MATERIALIZED (
+    SELECT pv.product_id,
+           ol.order_id,
+           pv.id                     AS variant_id,
+           sum(ol.quantity)          AS q,
+           sum(ol.line_total_cents)  AS r
+      FROM order_lines ol
+      JOIN orders o            ON o.id = ol.order_id
+      JOIN product_variants pv ON pv.id = ol.variant_id::uuid
+     WHERE o.tenant_id = %(tenant_id)s
+       AND o.created_at >= %(from)s
+       AND o.created_at <  %(to)s
+       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+     GROUP BY pv.product_id, ol.order_id, pv.id
+),
+per_order AS (
+    SELECT product_id, order_id, sum(q) AS q, sum(r) AS r
+      FROM base
+     GROUP BY product_id, order_id
+),
+po AS (
+    SELECT product_id,
+           count(*)          AS order_count,
+           sum(q)::bigint    AS quantity,
+           sum(r)            AS revenue_cents
+      FROM per_order
+     GROUP BY product_id
+),
+pvc AS (
+    SELECT product_id, count(*) AS variant_count
+      FROM (SELECT DISTINCT product_id, variant_id FROM base) d
+     GROUP BY product_id
+)
+SELECT p.id,
+       p.sku,
+       p.name,
+       p.brand,
+       p.currency,
+       po.order_count,
+       po.quantity,
+       po.revenue_cents,
+       pvc.variant_count
+  FROM po
+  JOIN pvc      ON pvc.product_id = po.product_id
+  JOIN products p ON p.id = po.product_id
+ ORDER BY po.quantity DESC, po.revenue_cents DESC
+ LIMIT %(limit)s"
+top_products;C4 statistieken;2;anthropic/claude-opus-5.5;openrouter;medium;16000;163,3;256,8;0,64;ZELFDE RESULTAAT, NIET SNELLER;8;0;;7365;2276;klaar;22,2;0,07498;nee;7;13,0;6,4;"WITH g AS (
+    SELECT pv.product_id,
+           ol.order_id,
+           pv.id                     AS variant_id,
+           sum(ol.quantity)          AS q,
+           sum(ol.line_total_cents)  AS r,
+           GROUPING(ol.order_id)     AS is_variant_row
+      FROM order_lines ol
+      JOIN orders o            ON o.id = ol.order_id
+      JOIN product_variants pv ON pv.id = ol.variant_id::uuid
+     WHERE o.tenant_id = %(tenant_id)s
+       AND o.created_at >= %(from)s
+       AND o.created_at <  %(to)s
+       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+     GROUP BY GROUPING SETS ((pv.product_id, ol.order_id),
+                             (pv.product_id, pv.id))
+), agg AS (
+    SELECT product_id,
+           count(*) FILTER (WHERE is_variant_row = 0)         AS order_count,
+           (sum(q) FILTER (WHERE is_variant_row = 0))::bigint AS quantity,
+           sum(r) FILTER (WHERE is_variant_row = 0)           AS revenue_cents,
+           count(*) FILTER (WHERE is_variant_row = 1)         AS variant_count
+      FROM g
+     GROUP BY product_id
+)
+SELECT p.id,
+       p.sku,
+       p.name,
+       p.brand,
+       p.currency,
+       a.order_count,
+       a.quantity,
+       a.revenue_cents,
+       a.variant_count
+  FROM agg a
+  JOIN products p ON p.id = a.product_id
+ ORDER BY a.quantity DESC, a.revenue_cents DESC
+ LIMIT %(limit)s"
+top_products;C4 statistieken;3;anthropic/claude-opus-5.5;openrouter;medium;16000;151,5;267,1;0,57;ZELFDE RESULTAAT, NIET SNELLER;8;0;;7365;2093;klaar;20,2;0,07132;nee;7;7,8;8,5;"WITH lines AS MATERIALIZED (
+    SELECT pv.product_id,
+           ol.order_id,
+           pv.id AS variant_id,
+           ol.quantity,
+           ol.line_total_cents
+      FROM order_lines ol
+      JOIN orders o            ON o.id = ol.order_id
+      JOIN product_variants pv ON pv.id = ol.variant_id::uuid
+     WHERE o.tenant_id = %(tenant_id)s
+       AND o.created_at >= %(from)s
+       AND o.created_at <  %(to)s
+       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+),
+per_order AS (
+    SELECT product_id,
+           order_id,
+           sum(quantity)         AS qty,
+           sum(line_total_cents) AS rev
+      FROM lines
+     GROUP BY product_id, order_id
+),
+prod_agg AS (
+    SELECT product_id,
+           count(*)          AS order_count,
+           sum(qty)::bigint  AS quantity,
+           sum(rev)          AS revenue_cents
+      FROM per_order
+     GROUP BY product_id
+),
+var_agg AS (
+    SELECT product_id, count(*) AS variant_count
+      FROM (SELECT DISTINCT product_id, variant_id FROM lines) d
+     GROUP BY product_id
+)
+SELECT p.id,
+       p.sku,
+       p.name,
+       p.brand,
+       p.currency,
+       a.order_count,
+       a.quantity,
+       a.revenue_cents,
+       v.variant_count
+  FROM prod_agg a
+  JOIN var_agg v  ON v.product_id = a.product_id
+  JOIN products p ON p.id = a.product_id
+ ORDER BY a.quantity DESC, a.revenue_cents DESC
+ LIMIT %(limit)s"
+top_customers;C1 query;1;anthropic/claude-opus-5.5;openrouter;medium;16000;5881,4;29,8;197,13;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;924;1342;klaar;13,1;0,03054;nee;3;449,0;2,7;"WITH totals AS (
+    SELECT o.customer_id,
+           sum(o.total_cents)  AS revenue,
+           count(*)            AS order_count,
+           max(o.created_at)   AS last_order_at
+      FROM orders o
+     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')
+       AND o.customer_id IN (SELECT c2.id
+                               FROM customers c2
+                              WHERE c2.tenant_id = %(tenant_id)s)
+     GROUP BY o.customer_id
+    HAVING max(o.created_at) >= %(from)s
+       AND max(o.created_at) <  %(to)s
+       AND count(o.created_at) = count(*)
+)
+SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       t.revenue,
+       t.order_count,
+       t.last_order_at
+  FROM customers c
+  JOIN totals t ON t.customer_id = c.id
+ WHERE c.tenant_id = %(tenant_id)s
+ ORDER BY t.revenue DESC
+ LIMIT %(limit)s"
+top_customers;C1 query;2;anthropic/claude-opus-5.5;openrouter;medium;16000;5805,2;31,9;182,23;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;924;1446;klaar;14,2;0,03262;nee;3;273,9;2,5;"WITH totals AS (
+    SELECT o.customer_id,
+           sum(o.total_cents) AS revenue,
+           count(*)           AS order_count,
+           max(o.created_at)  AS last_order_at
+      FROM orders o
+     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')
+       AND o.customer_id IN (SELECT c2.id
+                               FROM customers c2
+                              WHERE c2.tenant_id = %(tenant_id)s)
+     GROUP BY o.customer_id
+    HAVING count(*) = count(o.created_at)   -- DISTINCT ON ... DESC zou een NULL als ""laatste"" kiezen
+       AND max(o.created_at) >= %(from)s
+       AND max(o.created_at) <  %(to)s
+)
+SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       t.revenue,
+       t.order_count,
+       t.last_order_at
+  FROM customers c
+  JOIN totals t ON t.customer_id = c.id
+ WHERE c.tenant_id = %(tenant_id)s
+ ORDER BY t.revenue DESC
+ LIMIT %(limit)s"
+top_customers;C1 query;3;anthropic/claude-opus-5.5;openrouter;medium;16000;5928,2;30,3;195,97;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;924;1370;klaar;13,9;0,03110;nee;3;157,3;1,5;"WITH agg AS (
+    SELECT o.customer_id,
+           sum(o.total_cents)  AS revenue,
+           count(*)            AS order_count,
+           max(o.created_at)   AS last_order_at
+      FROM orders o
+     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')
+       AND o.customer_id IN (SELECT c2.id
+                               FROM customers c2
+                              WHERE c2.tenant_id = %(tenant_id)s)
+     GROUP BY o.customer_id
+    HAVING count(o.created_at) = count(*)
+       AND max(o.created_at) >= %(from)s
+       AND max(o.created_at) <  %(to)s
+)
+SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       t.revenue,
+       t.order_count,
+       t.last_order_at
+  FROM customers c
+  JOIN agg t ON t.customer_id = c.id
+ WHERE c.tenant_id = %(tenant_id)s
+ ORDER BY t.revenue DESC
+ LIMIT %(limit)s"
+top_customers;C2 schema;1;anthropic/claude-opus-5.5;openrouter;medium;16000;5901,2;28,1;210,26;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;1982;1365;klaar;13,1;0,03523;nee;3;148,8;4,9;"SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       sum(o.total_cents)  AS revenue,
+       count(*)            AS order_count,
+       max(o.created_at)   AS last_order_at
+  FROM customers c
+  JOIN orders o
+    ON o.customer_id = c.id
+ WHERE c.tenant_id = %(tenant_id)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+ GROUP BY c.id
+HAVING max(o.created_at) >= %(from)s
+   AND max(o.created_at) <  %(to)s
+ ORDER BY revenue DESC
+ LIMIT %(limit)s"
+top_customers;C2 schema;2;anthropic/claude-opus-5.5;openrouter;medium;16000;5849,0;26,4;221,31;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;1982;1074;klaar;10,8;0,02941;nee;3;63,6;0,6;"SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       sum(o.total_cents)  AS revenue,
+       count(*)            AS order_count,
+       max(o.created_at)   AS last_order_at
+  FROM customers c
+  JOIN orders o
+    ON o.customer_id = c.id
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+ WHERE c.tenant_id = %(tenant_id)s
+ GROUP BY c.id
+HAVING max(o.created_at) >= %(from)s
+   AND max(o.created_at) <  %(to)s
+ ORDER BY revenue DESC
+ LIMIT %(limit)s"
+top_customers;C2 schema;3;anthropic/claude-opus-5.5;openrouter;medium;16000;5866,4;30,0;195,48;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;1982;1356;klaar;13,4;0,03505;nee;3;129,2;1,3;"WITH agg AS (
+    SELECT o.customer_id,
+           sum(o.total_cents) AS revenue,
+           count(*)           AS order_count,
+           max(o.created_at)  AS last_order_at
+      FROM orders o
+      JOIN customers c
+        ON c.id = o.customer_id
+       AND c.tenant_id = %(tenant_id)s
+     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')
+     GROUP BY o.customer_id
+    HAVING max(o.created_at) >= %(from)s
+       AND max(o.created_at) <  %(to)s
+)
+SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       a.revenue,
+       a.order_count,
+       a.last_order_at
+  FROM agg a
+  JOIN customers c ON c.id = a.customer_id
+ ORDER BY a.revenue DESC
+ LIMIT %(limit)s"
+top_customers;C3 plan;1;anthropic/claude-opus-5.5;openrouter;medium;16000;5812,2;36,1;161,08;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;3478;1139;klaar;11,5;0,03669;nee;3;90,2;0,8;"SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       t.revenue,
+       t.order_count,
+       t.last_order_at
+  FROM customers c
+  JOIN (
+        SELECT o.customer_id,
+               sum(o.total_cents) AS revenue,
+               count(*)           AS order_count,
+               max(o.created_at)  AS last_order_at
+          FROM orders o
+         WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')
+         GROUP BY o.customer_id
+        HAVING max(o.created_at) >= %(from)s
+           AND max(o.created_at) <  %(to)s
+       ) t ON t.customer_id = c.id
+ WHERE c.tenant_id = %(tenant_id)s
+ ORDER BY t.revenue DESC
+ LIMIT %(limit)s"
+top_customers;C3 plan;2;anthropic/claude-opus-5.5;openrouter;medium;16000;5836,5;35,8;163,22;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;3478;1046;klaar;10,2;0,03483;nee;3;42,7;0,6;"SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       t.revenue,
+       t.order_count,
+       t.last_order_at
+  FROM customers c
+  JOIN (
+        SELECT o.customer_id,
+               sum(o.total_cents)  AS revenue,
+               count(*)            AS order_count,
+               max(o.created_at)   AS last_order_at
+          FROM orders o
+         WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')
+         GROUP BY o.customer_id
+        HAVING max(o.created_at) >= %(from)s
+           AND max(o.created_at) <  %(to)s
+       ) t ON t.customer_id = c.id
+ WHERE c.tenant_id = %(tenant_id)s
+ ORDER BY t.revenue DESC
+ LIMIT %(limit)s"
+top_customers;C3 plan;3;anthropic/claude-opus-5.5;openrouter;medium;16000;5889,9;26,9;218,76;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;3478;838;klaar;8,7;0,03067;nee;3;81,6;1,1;"SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       sum(o.total_cents) AS revenue,
+       count(*)           AS order_count,
+       max(o.created_at)  AS last_order_at
+  FROM customers c
+  JOIN orders o ON o.customer_id = c.id
+ WHERE c.tenant_id = %(tenant_id)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+ GROUP BY c.id
+HAVING max(o.created_at) >= %(from)s
+   AND max(o.created_at) <  %(to)s
+ ORDER BY revenue DESC
+ LIMIT %(limit)s"
+top_customers;C4 statistieken;1;anthropic/claude-opus-5.5;openrouter;medium;16000;5828,0;26,5;220,06;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;5078;1041;klaar;10,6;0,04113;nee;3;240,9;5,2;"SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       sum(o.total_cents)  AS revenue,
+       count(*)            AS order_count,
+       max(o.created_at)   AS last_order_at
+  FROM customers c
+  JOIN orders o ON o.customer_id = c.id
+ WHERE c.tenant_id = %(tenant_id)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+ GROUP BY c.id
+HAVING max(o.created_at) >= %(from)s
+   AND max(o.created_at) <  %(to)s
+ ORDER BY revenue DESC
+ LIMIT %(limit)s"
+top_customers;C4 statistieken;2;anthropic/claude-opus-5.5;openrouter;medium;16000;5838,1;27,4;213,02;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;5078;975;klaar;9,7;0,03981;nee;3;127,4;0,9;"SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       sum(o.total_cents)  AS revenue,
+       count(*)            AS order_count,
+       max(o.created_at)   AS last_order_at
+  FROM customers c
+  JOIN orders o ON o.customer_id = c.id
+ WHERE c.tenant_id = %(tenant_id)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+ GROUP BY c.id
+HAVING max(o.created_at) >= %(from)s
+   AND max(o.created_at) <  %(to)s
+ ORDER BY revenue DESC
+ LIMIT %(limit)s"
+top_customers;C4 statistieken;3;anthropic/claude-opus-5.5;openrouter;medium;16000;5972,6;27,5;217,14;GOED: zelfde resultaat en minstens 1,2x sneller;4;0;;5078;973;klaar;11,0;0,03977;nee;3;157,1;2,1;"SELECT c.id,
+       c.email,
+       c.company,
+       c.country_code,
+       sum(o.total_cents)  AS revenue,
+       count(*)            AS order_count,
+       max(o.created_at)   AS last_order_at
+  FROM customers c
+  JOIN orders o
+    ON o.customer_id = c.id
+ WHERE c.tenant_id = %(tenant_id)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')
+ GROUP BY c.id
+HAVING max(o.created_at) >= %(from)s
+   AND max(o.created_at) <  %(to)s
+ ORDER BY revenue DESC
+ LIMIT %(limit)s"
+audit_log_page;C1 query;1;anthropic/claude-opus-5.5;openrouter;medium;16000;6,5;6,7;0,97;ZELFDE RESULTAAT, NIET SNELLER;8;0;;735;2150;klaar;19,7;0,04594;nee;7;0,6;0,1;"WITH hits AS (
+    (SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action, a.old_data,
+            a.new_data, a.actor_id, a.is_system, a.created_at
+       FROM audit_log a
+      WHERE %(table_name)s::text IS NULL
+        AND %(row_id)s::uuid IS NULL
+        AND a.tenant_id = %(tenant_id)s
+        AND a.created_at >= %(from)s
+        AND a.created_at <  %(to)s
+      ORDER BY a.created_at DESC, a.id DESC
+      LIMIT %(limit)s + %(offset)s)
+    UNION ALL
+    (SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action, a.old_data,
+            a.new_data, a.actor_id, a.is_system, a.created_at
+       FROM audit_log a
+      WHERE %(table_name)s::text IS NOT NULL
+        AND %(row_id)s::uuid IS NULL
+        AND a.tenant_id = %(tenant_id)s
+        AND a.table_name = %(table_name)s
+        AND a.created_at >= %(from)s
+        AND a.created_at <  %(to)s
+      ORDER BY a.created_at DESC, a.id DESC
+      LIMIT %(limit)s + %(offset)s)
+    UNION ALL
+    (SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action, a.old_data,
+            a.new_data, a.actor_id, a.is_system, a.created_at
+       FROM audit_log a
+      WHERE %(table_name)s::text IS NULL
+        AND %(row_id)s::uuid IS NOT NULL
+        AND a.tenant_id = %(tenant_id)s
+        AND a.row_id = %(row_id)s
+        AND a.created_at >= %(from)s
+        AND a.created_at <  %(to)s
+      ORDER BY a.created_at DESC, a.id DESC
+      LIMIT %(limit)s + %(offset)s)
+    UNION ALL
+    (SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action, a.old_data,
+            a.new_data, a.actor_id, a.is_system, a.created_at
+       FROM audit_log a
+      WHERE %(table_name)s::text IS NOT NULL
+        AND %(row_id)s::uuid IS NOT NULL
+        AND a.tenant_id = %(tenant_id)s
+        AND a.table_name = %(table_name)s
+        AND a.row_id = %(row_id)s
+        AND a.created_at >= %(from)s
+        AND a.created_at <  %(to)s
+      ORDER BY a.created_at DESC, a.id DESC
+      LIMIT %(limit)s + %(offset)s)
+)
+SELECT h.id,
+       h.tenant_id,
+       h.table_name,
+       h.row_id,
+       h.action,
+       h.old_data,
+       h.new_data,
+       h.actor_id,
+       h.is_system,
+       h.created_at
+  FROM hits h
+ ORDER BY h.created_at DESC, h.id DESC
+ LIMIT %(limit)s OFFSET %(offset)s"
+audit_log_page;C1 query;2;anthropic/claude-opus-5.5;openrouter;medium;16000;6,7;6,9;0,97;ZELFDE RESULTAAT, NIET SNELLER;8;0;;735;1121;klaar;12,4;0,02536;ja;7;0,9;0,6;"-- name: audit_log_page
+-- owner: compliance
+-- params: tenant_id, table_name, row_id, from, to, limit, offset
+-- One page of the audit trail, newest first. table_name and row_id are
+-- optional; pass NULL to skip the filter.
+SELECT a.id,
+       a.tenant_id,
+       a.table_name,
+       a.row_id,
+       a.action,
+       a.old_data,
+       a.new_data,
+       a.actor_id,
+       a.is_system,
+       a.created_at
+  FROM audit_log a
+ WHERE a.tenant_id = %(tenant_id)s
+   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)
+   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)
+   AND a.created_at >= %(from)s
+   AND a.created_at <  %(to)s
+ ORDER BY a.created_at DESC, a.id DESC
+ LIMIT %(limit)s OFFSET %(offset)s"
+audit_log_page;C1 query;3;anthropic/claude-opus-5.5;openrouter;medium;16000;7,4;7,3;1,02;ZELFDE RESULTAAT, NIET SNELLER;8;0;;735;1092;klaar;11,6;0,02478;ja;7;1,3;0,6;"-- name: audit_log_page
+-- owner: compliance
+-- params: tenant_id, table_name, row_id, from, to, limit, offset
+-- One page of the audit trail, newest first. table_name and row_id are
+-- optional; pass NULL to skip the filter.
+SELECT a.id,
+       a.tenant_id,
+       a.table_name,
+       a.row_id,
+       a.action,
+       a.old_data,
+       a.new_data,
+       a.actor_id,
+       a.is_system,
+       a.created_at
+  FROM audit_log a
+ WHERE a.tenant_id = %(tenant_id)s
+   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)
+   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)
+   AND a.created_at >= %(from)s
+   AND a.created_at <  %(to)s
+ ORDER BY a.created_at DESC, a.id DESC
+ LIMIT %(limit)s OFFSET %(offset)s"
+audit_log_page;C2 schema;1;anthropic/claude-opus-5.5;openrouter;medium;16000;6,3;6,3;1,00;ZELFDE RESULTAAT, NIET SNELLER;8;0;;1285;868;klaar;9,0;0,02250;ja;7;0,4;1,0;"-- name: audit_log_page
+-- owner: compliance
+-- params: tenant_id, table_name, row_id, from, to, limit, offset
+-- One page of the audit trail, newest first. table_name and row_id are
+-- optional; pass NULL to skip the filter.
+SELECT a.id,
+       a.tenant_id,
+       a.table_name,
+       a.row_id,
+       a.action,
+       a.old_data,
+       a.new_data,
+       a.actor_id,
+       a.is_system,
+       a.created_at
+  FROM audit_log a
+ WHERE a.tenant_id = %(tenant_id)s
+   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)
+   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)
+   AND a.created_at >= %(from)s
+   AND a.created_at <  %(to)s
+ ORDER BY a.created_at DESC, a.id DESC
+ LIMIT %(limit)s OFFSET %(offset)s"
+audit_log_page;C2 schema;2;anthropic/claude-opus-5.5;openrouter;medium;16000;6,8;6,6;1,03;ZELFDE RESULTAAT, NIET SNELLER;8;0;;1285;1802;klaar;16,9;0,04118;nee;7;1,6;0,8;"WITH p AS (
+    SELECT %(limit)s::bigint + COALESCE(%(offset)s::bigint, 0) AS n
+)
+SELECT u.id, u.tenant_id, u.table_name, u.row_id, u.action,
+       u.old_data, u.new_data, u.actor_id, u.is_system, u.created_at
+  FROM (
+        (SELECT a.*
+           FROM audit_log a
+          WHERE %(row_id)s::uuid IS NOT NULL
+            AND a.row_id = %(row_id)s::uuid
+            AND a.tenant_id = %(tenant_id)s
+            AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s::text)
+            AND a.created_at >= %(from)s
+            AND a.created_at <  %(to)s
+          ORDER BY a.created_at DESC, a.id DESC
+          LIMIT (SELECT n FROM p))
+        UNION ALL
+        (SELECT a.*
+           FROM audit_log a
+          WHERE %(row_id)s::uuid IS NULL
+            AND %(table_name)s::text IS NOT NULL
+            AND a.tenant_id = %(tenant_id)s
+            AND a.table_name = %(table_name)s::text
+            AND a.created_at >= %(from)s
+            AND a.created_at <  %(to)s
+          ORDER BY a.created_at DESC, a.id DESC
+          LIMIT (SELECT n FROM p))
+        UNION ALL
+        (SELECT a.*
+           FROM audit_log a
+          WHERE %(row_id)s::uuid IS NULL
+            AND %(table_name)s::text IS NULL
+            AND a.tenant_id = %(tenant_id)s
+            AND a.created_at >= %(from)s
+            AND a.created_at <  %(to)s
+          ORDER BY a.created_at DESC, a.id DESC
+          LIMIT (SELECT n FROM p))
+       ) u
+ ORDER BY u.created_at DESC, u.id DESC
+ LIMIT %(limit)s OFFSET %(offset)s"
+audit_log_page;C2 schema;3;anthropic/claude-opus-5.5;openrouter;medium;16000;7,7;7,0;1,10;ZELFDE RESULTAAT, NIET SNELLER;8;0;;1285;1098;klaar;11,5;0,02710;ja;7;1,8;1,0;"-- name: audit_log_page
+-- owner: compliance
+-- params: tenant_id, table_name, row_id, from, to, limit, offset
+-- One page of the audit trail, newest first. table_name and row_id are
+-- optional; pass NULL to skip the filter.
+SELECT a.id,
+       a.tenant_id,
+       a.table_name,
+       a.row_id,
+       a.action,
+       a.old_data,
+       a.new_data,
+       a.actor_id,
+       a.is_system,
+       a.created_at
+  FROM audit_log a
+ WHERE a.tenant_id = %(tenant_id)s
+   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)
+   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)
+   AND a.created_at >= %(from)s
+   AND a.created_at <  %(to)s
+ ORDER BY a.created_at DESC, a.id DESC
+ LIMIT %(limit)s OFFSET %(offset)s"
+audit_log_page;C3 plan;1;anthropic/claude-opus-5.5;openrouter;medium;16000;6,5;6,2;1,04;ZELFDE RESULTAAT, NIET SNELLER;8;0;;1803;643;klaar;6,7;0,02007;ja;7;0,9;0,9;"-- name: audit_log_page
+-- owner: compliance
+-- params: tenant_id, table_name, row_id, from, to, limit, offset
+-- One page of the audit trail, newest first. table_name and row_id are
+-- optional; pass NULL to skip the filter.
+SELECT a.id,
+       a.tenant_id,
+       a.table_name,
+       a.row_id,
+       a.action,
+       a.old_data,
+       a.new_data,
+       a.actor_id,
+       a.is_system,
+       a.created_at
+  FROM audit_log a
+ WHERE a.tenant_id = %(tenant_id)s
+   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)
+   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)
+   AND a.created_at >= %(from)s
+   AND a.created_at <  %(to)s
+ ORDER BY a.created_at DESC, a.id DESC
+ LIMIT %(limit)s OFFSET %(offset)s"
+audit_log_page;C3 plan;2;anthropic/claude-opus-5.5;openrouter;medium;16000;6,0;6,4;0,95;ZELFDE RESULTAAT, NIET SNELLER;8;0;;1803;669;klaar;7,1;0,02059;ja;7;0,2;0,7;"-- name: audit_log_page
+-- owner: compliance
+-- params: tenant_id, table_name, row_id, from, to, limit, offset
+-- One page of the audit trail, newest first. table_name and row_id are
+-- optional; pass NULL to skip the filter.
+SELECT a.id,
+       a.tenant_id,
+       a.table_name,
+       a.row_id,
+       a.action,
+       a.old_data,
+       a.new_data,
+       a.actor_id,
+       a.is_system,
+       a.created_at
+  FROM audit_log a
+ WHERE a.tenant_id = %(tenant_id)s
+   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)
+   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)
+   AND a.created_at >= %(from)s
+   AND a.created_at <  %(to)s
+ ORDER BY a.created_at DESC, a.id DESC
+ LIMIT %(limit)s OFFSET %(offset)s"
+audit_log_page;C3 plan;3;anthropic/claude-opus-5.5;openrouter;medium;16000;7,7;8,6;0,89;ZELFDE RESULTAAT, NIET SNELLER;8;0;;1803;699;klaar;7,2;0,02119;ja;7;0,2;1,2;"-- name: audit_log_page
+-- owner: compliance
+-- params: tenant_id, table_name, row_id, from, to, limit, offset
+-- One page of the audit trail, newest first. table_name and row_id are
+-- optional; pass NULL to skip the filter.
+SELECT a.id,
+       a.tenant_id,
+       a.table_name,
+       a.row_id,
+       a.action,
+       a.old_data,
+       a.new_data,
+       a.actor_id,
+       a.is_system,
+       a.created_at
+  FROM audit_log a
+ WHERE a.tenant_id = %(tenant_id)s
+   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)
+   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)
+   AND a.created_at >= %(from)s
+   AND a.created_at <  %(to)s
+ ORDER BY a.created_at DESC, a.id DESC
+ LIMIT %(limit)s OFFSET %(offset)s"
+audit_log_page;C4 statistieken;1;anthropic/claude-opus-5.5;openrouter;medium;16000;6,5;6,5;1,00;ZELFDE RESULTAAT, NIET SNELLER;8;0;;3066;901;klaar;9,2;0,03028;ja;7;0,9;1,0;"-- name: audit_log_page
+-- owner: compliance
+-- params: tenant_id, table_name, row_id, from, to, limit, offset
+-- One page of the audit trail, newest first. table_name and row_id are
+-- optional; pass NULL to skip the filter.
+SELECT a.id,
+       a.tenant_id,
+       a.table_name,
+       a.row_id,
+       a.action,
+       a.old_data,
+       a.new_data,
+       a.actor_id,
+       a.is_system,
+       a.created_at
+  FROM audit_log a
+ WHERE a.tenant_id = %(tenant_id)s
+   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)
+   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)
+   AND a.created_at >= %(from)s
+   AND a.created_at <  %(to)s
+ ORDER BY a.created_at DESC, a.id DESC
+ LIMIT %(limit)s OFFSET %(offset)s"
+audit_log_page;C4 statistieken;2;anthropic/claude-opus-5.5;openrouter;medium;16000;6,2;6,1;1,01;ZELFDE RESULTAAT, NIET SNELLER;8;0;;3066;713;klaar;7,3;0,02652;ja;7;1,4;0,7;"-- name: audit_log_page
+-- owner: compliance
+-- params: tenant_id, table_name, row_id, from, to, limit, offset
+-- One page of the audit trail, newest first. table_name and row_id are
+-- optional; pass NULL to skip the filter.
+SELECT a.id,
+       a.tenant_id,
+       a.table_name,
+       a.row_id,
+       a.action,
+       a.old_data,
+       a.new_data,
+       a.actor_id,
+       a.is_system,
+       a.created_at
+  FROM audit_log a
+ WHERE a.tenant_id = %(tenant_id)s
+   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)
+   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)
+   AND a.created_at >= %(from)s
+   AND a.created_at <  %(to)s
+ ORDER BY a.created_at DESC, a.id DESC
+ LIMIT %(limit)s OFFSET %(offset)s"
+audit_log_page;C4 statistieken;3;anthropic/claude-opus-5.5;openrouter;medium;16000;7,1;6,9;1,03;ZELFDE RESULTAAT, NIET SNELLER;8;0;;3066;612;klaar;6,4;0,02450;ja;7;1,5;0,5;"-- name: audit_log_page
+-- owner: compliance
+-- params: tenant_id, table_name, row_id, from, to, limit, offset
+-- One page of the audit trail, newest first. table_name and row_id are
+-- optional; pass NULL to skip the filter.
+SELECT a.id,
+       a.tenant_id,
+       a.table_name,
+       a.row_id,
+       a.action,
+       a.old_data,
+       a.new_data,
+       a.actor_id,
+       a.is_system,
+       a.created_at
+  FROM audit_log a
+ WHERE a.tenant_id = %(tenant_id)s
+   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)
+   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)
+   AND a.created_at >= %(from)s
+   AND a.created_at <  %(to)s
+ ORDER BY a.created_at DESC, a.id DESC
+ LIMIT %(limit)s OFFSET %(offset)s"
+revenue_orders;C1 query;1;anthropic/claude-opus-5.5;openrouter;medium;16000;36,6;37,1;0,99;ZELFDE RESULTAAT, NIET SNELLER;8;0;;620;476;klaar;5,3;0,01200;ja;7;7,7;9,8;"-- name: revenue_orders
+-- owner: finance
+-- params: tenant_id, from, to
+-- Revenue-bearing orders in a window. Period grouping (day/week/month, week
+-- start, fiscal month boundaries) is applied by the service layer so the same
+-- query feeds every grouping the dashboard offers.
+SELECT o.id,
+       o.created_at,
+       o.status,
+       o.total_cents,
+       o.currency
+  FROM orders o
+ WHERE o.tenant_id = %(tenant_id)s
+   AND o.created_at >= %(from)s
+   AND o.created_at <  %(to)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')"
+revenue_orders;C1 query;2;anthropic/claude-opus-5.5;openrouter;medium;16000;35,9;34,7;1,03;ZELFDE RESULTAAT, NIET SNELLER;8;0;;620;469;klaar;5,7;0,01186;ja;7;5,8;1,4;"-- name: revenue_orders
+-- owner: finance
+-- params: tenant_id, from, to
+-- Revenue-bearing orders in a window. Period grouping (day/week/month, week
+-- start, fiscal month boundaries) is applied by the service layer so the same
+-- query feeds every grouping the dashboard offers.
+SELECT o.id,
+       o.created_at,
+       o.status,
+       o.total_cents,
+       o.currency
+  FROM orders o
+ WHERE o.tenant_id = %(tenant_id)s
+   AND o.created_at >= %(from)s
+   AND o.created_at <  %(to)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')"
+revenue_orders;C1 query;3;anthropic/claude-opus-5.5;openrouter;medium;16000;34,4;34,1;1,01;ZELFDE RESULTAAT, NIET SNELLER;8;0;;620;507;klaar;6,0;0,01262;ja;7;1,8;4,0;"-- name: revenue_orders
+-- owner: finance
+-- params: tenant_id, from, to
+-- Revenue-bearing orders in a window. Period grouping (day/week/month, week
+-- start, fiscal month boundaries) is applied by the service layer so the same
+-- query feeds every grouping the dashboard offers.
+SELECT o.id,
+       o.created_at,
+       o.status,
+       o.total_cents,
+       o.currency
+  FROM orders o
+ WHERE o.tenant_id = %(tenant_id)s
+   AND o.created_at >= %(from)s
+   AND o.created_at <  %(to)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')"
+revenue_orders;C2 schema;1;anthropic/claude-opus-5.5;openrouter;medium;16000;33,5;33,5;1,00;ZELFDE RESULTAAT, NIET SNELLER;8;0;;1297;588;klaar;6,5;0,01695;ja;7;0,9;1,6;"-- name: revenue_orders
+-- owner: finance
+-- params: tenant_id, from, to
+-- Revenue-bearing orders in a window. Period grouping (day/week/month, week
+-- start, fiscal month boundaries) is applied by the service layer so the same
+-- query feeds every grouping the dashboard offers.
+SELECT o.id,
+       o.created_at,
+       o.status,
+       o.total_cents,
+       o.currency
+  FROM orders o
+ WHERE o.tenant_id = %(tenant_id)s
+   AND o.created_at >= %(from)s
+   AND o.created_at <  %(to)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')"
+revenue_orders;C2 schema;2;anthropic/claude-opus-5.5;openrouter;medium;16000;29,8;30,6;0,97;ZELFDE RESULTAAT, NIET SNELLER;8;0;;1297;618;klaar;6,7;0,01755;ja;7;2,8;2,0;"-- name: revenue_orders
+-- owner: finance
+-- params: tenant_id, from, to
+-- Revenue-bearing orders in a window. Period grouping (day/week/month, week
+-- start, fiscal month boundaries) is applied by the service layer so the same
+-- query feeds every grouping the dashboard offers.
+SELECT o.id,
+       o.created_at,
+       o.status,
+       o.total_cents,
+       o.currency
+  FROM orders o
+ WHERE o.tenant_id = %(tenant_id)s
+   AND o.created_at >= %(from)s
+   AND o.created_at <  %(to)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')"
+revenue_orders;C2 schema;3;anthropic/claude-opus-5.5;openrouter;medium;16000;32,9;31,8;1,04;ZELFDE RESULTAAT, NIET SNELLER;8;0;;1297;584;klaar;6,4;0,01687;ja;7;1,3;3,7;"-- name: revenue_orders
+-- owner: finance
+-- params: tenant_id, from, to
+-- Revenue-bearing orders in a window. Period grouping (day/week/month, week
+-- start, fiscal month boundaries) is applied by the service layer so the same
+-- query feeds every grouping the dashboard offers.
+SELECT o.id,
+       o.created_at,
+       o.status,
+       o.total_cents,
+       o.currency
+  FROM orders o
+ WHERE o.tenant_id = %(tenant_id)s
+   AND o.created_at >= %(from)s
+   AND o.created_at <  %(to)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')"
+revenue_orders;C3 plan;1;anthropic/claude-opus-5.5;openrouter;medium;16000;32,1;32,0;1,00;ZELFDE RESULTAAT, NIET SNELLER;8;0;;1788;496;klaar;5,7;0,01707;ja;7;1,0;1,7;"-- name: revenue_orders
+-- owner: finance
+-- params: tenant_id, from, to
+-- Revenue-bearing orders in a window. Period grouping (day/week/month, week
+-- start, fiscal month boundaries) is applied by the service layer so the same
+-- query feeds every grouping the dashboard offers.
+SELECT o.id,
+       o.created_at,
+       o.status,
+       o.total_cents,
+       o.currency
+  FROM orders o
+ WHERE o.tenant_id = %(tenant_id)s
+   AND o.created_at >= %(from)s
+   AND o.created_at <  %(to)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')"
+revenue_orders;C3 plan;2;anthropic/claude-opus-5.5;openrouter;medium;16000;32,0;32,1;1,00;ZELFDE RESULTAAT, NIET SNELLER;8;0;;1788;480;klaar;5,5;0,01675;ja;7;3,3;0,7;"-- name: revenue_orders
+-- owner: finance
+-- params: tenant_id, from, to
+-- Revenue-bearing orders in a window. Period grouping (day/week/month, week
+-- start, fiscal month boundaries) is applied by the service layer so the same
+-- query feeds every grouping the dashboard offers.
+SELECT o.id,
+       o.created_at,
+       o.status,
+       o.total_cents,
+       o.currency
+  FROM orders o
+ WHERE o.tenant_id = %(tenant_id)s
+   AND o.created_at >= %(from)s
+   AND o.created_at <  %(to)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')"
+revenue_orders;C3 plan;3;anthropic/claude-opus-5.5;openrouter;medium;16000;32,5;32,1;1,02;ZELFDE RESULTAAT, NIET SNELLER;8;0;;1788;533;klaar;6,1;0,01781;ja;7;2,8;1,4;"-- name: revenue_orders
+-- owner: finance
+-- params: tenant_id, from, to
+-- Revenue-bearing orders in a window. Period grouping (day/week/month, week
+-- start, fiscal month boundaries) is applied by the service layer so the same
+-- query feeds every grouping the dashboard offers.
+SELECT o.id,
+       o.created_at,
+       o.status,
+       o.total_cents,
+       o.currency
+  FROM orders o
+ WHERE o.tenant_id = %(tenant_id)s
+   AND o.created_at >= %(from)s
+   AND o.created_at <  %(to)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')"
+revenue_orders;C4 statistieken;1;anthropic/claude-opus-5.5;openrouter;medium;16000;32,2;32,2;1,00;ZELFDE RESULTAAT, NIET SNELLER;8;0;;2339;524;klaar;5,9;0,01984;ja;7;1,0;1,1;"-- name: revenue_orders
+-- owner: finance
+-- params: tenant_id, from, to
+-- Revenue-bearing orders in a window. Period grouping (day/week/month, week
+-- start, fiscal month boundaries) is applied by the service layer so the same
+-- query feeds every grouping the dashboard offers.
+SELECT o.id,
+       o.created_at,
+       o.status,
+       o.total_cents,
+       o.currency
+  FROM orders o
+ WHERE o.tenant_id = %(tenant_id)s
+   AND o.created_at >= %(from)s
+   AND o.created_at <  %(to)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')"
+revenue_orders;C4 statistieken;2;anthropic/claude-opus-5.5;openrouter;medium;16000;32,2;31,9;1,01;ZELFDE RESULTAAT, NIET SNELLER;8;0;;2339;480;klaar;5,7;0,01896;ja;7;1,0;2,1;"-- name: revenue_orders
+-- owner: finance
+-- params: tenant_id, from, to
+-- Revenue-bearing orders in a window. Period grouping (day/week/month, week
+-- start, fiscal month boundaries) is applied by the service layer so the same
+-- query feeds every grouping the dashboard offers.
+SELECT o.id,
+       o.created_at,
+       o.status,
+       o.total_cents,
+       o.currency
+  FROM orders o
+ WHERE o.tenant_id = %(tenant_id)s
+   AND o.created_at >= %(from)s
+   AND o.created_at <  %(to)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')"
+revenue_orders;C4 statistieken;3;anthropic/claude-opus-5.5;openrouter;medium;16000;32,4;35,3;0,92;ZELFDE RESULTAAT, NIET SNELLER;8;0;;2339;583;klaar;6,4;0,02102;ja;7;3,0;5,9;"-- name: revenue_orders
+-- owner: finance
+-- params: tenant_id, from, to
+-- Revenue-bearing orders in a window. Period grouping (day/week/month, week
+-- start, fiscal month boundaries) is applied by the service layer so the same
+-- query feeds every grouping the dashboard offers.
+SELECT o.id,
+       o.created_at,
+       o.status,
+       o.total_cents,
+       o.currency
+  FROM orders o
+ WHERE o.tenant_id = %(tenant_id)s
+   AND o.created_at >= %(from)s
+   AND o.created_at <  %(to)s
+   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')"

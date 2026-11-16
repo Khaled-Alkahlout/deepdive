@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH sales AS (\n  SELECT pv.product_id,\n         count(DISTINCT o.id)        AS order_count,\n         sum(ol.quantity)            AS quantity,\n         sum(ol.line_total_cents)    AS revenue_cents,\n         count(DISTINCT pv.id)       AS variant_count\n    FROM order_lines ol\n    JOIN orders o           ON o.id = ol.order_id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n   GROUP BY pv.product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       s.order_count,\n       s.quantity,\n       s.revenue_cents,\n       s.variant_count\n  FROM sales s\n  JOIN products p ON p.id = s.product_id\n ORDER BY s.quantity DESC, s.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe aggregatie gebeurt nu per product_id vóór de join met `products`, zodat die join alleen nog voor de gegroepeerde rijen nodig is. Het resultaat blijft gelijk, omdat `products.id` de primaire sleutel is en elke variant precies één product heeft. De grootste kostenpost is de scan van `order_lines` zonder index op `order_id`, en die kan deze herschrijving niet wegnemen. Bij gelijke waarden voor `quantity` en `revenue_cents` is de volgorde in het origineel al niet deterministisch.",
+  "input_tokens": 2398,
+  "output_tokens": 4219,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0023493,
+  "usage_raw": {
+    "prompt_tokens": 2398,
+    "completion_tokens": 4219,
+    "total_tokens": 6617,
+    "cost": 0.0023493,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0023493,
+      "upstream_inference_prompt_cost": 0.0002398,
+      "upstream_inference_completions_cost": 0.0021095
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 3603,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 19.5,
+  "sql": "WITH sales AS (\n  SELECT pv.product_id,\n         count(DISTINCT o.id)        AS order_count,\n         sum(ol.quantity)            AS quantity,\n         sum(ol.line_total_cents)    AS revenue_cents,\n         count(DISTINCT pv.id)       AS variant_count\n    FROM order_lines ol\n    JOIN orders o           ON o.id = ol.order_id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n   GROUP BY pv.product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       s.order_count,\n       s.quantity,\n       s.revenue_cents,\n       s.variant_count\n  FROM sales s\n  JOIN products p ON p.id = s.product_id\n ORDER BY s.quantity DESC, s.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o\n    ON o.customer_id = c.id\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n WHERE c.tenant_id = %(tenant_id)s\n GROUP BY c.id, c.email, c.company, c.country_code\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s\n```\n\nHet origineel joinde twee CTE's op elkaar zonder bruikbare index, wat tot ruim 48 miljoen weggefilterde rijen leidde. Deze versie aggregeert in één pass en joint orders direct aan de tenant-gefilterde customers, waarbij de datumfilter op `max(created_at)` gelijk is aan de `last_order_at`-filter van het origineel. Kolommen, rijen en de ORDER BY blijven gelijk; alleen de volgorde van gelijke omzetten is, zoals in het origineel, niet gegarandeerd.",
+  "input_tokens": 3478,
+  "output_tokens": 2658,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0016768,
+  "usage_raw": {
+    "prompt_tokens": 3478,
+    "completion_tokens": 2658,
+    "total_tokens": 6136,
+    "cost": 0.0016768,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0016768,
+      "upstream_inference_prompt_cost": 0.0003478,
+      "upstream_inference_completions_cost": 0.001329
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2198,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 12.3,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o\n    ON o.customer_id = c.id\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n WHERE c.tenant_id = %(tenant_id)s\n GROUP BY c.id, c.email, c.company, c.country_code\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

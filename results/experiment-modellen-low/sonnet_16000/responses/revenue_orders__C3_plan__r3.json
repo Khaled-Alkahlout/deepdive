@@ -1,0 +1,33 @@
+{
+  "text": "Zonder DDL kan ik geen betere index aanmaken, en de query is al een eenvoudige selectie zonder overbodige joins, subqueries of functies. Het plan gebruikt al een bitmap scan op tenant_id. Een herschrijving die hetzelfde resultaat garandeert, geeft geen zinvolle winst. De query heeft ook geen ORDER BY, dus er is geen volgorde om te behouden of te optimaliseren.\n\n```sql\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nIk zie geen zinvolle verbetering, dus de query is ongewijzigd teruggegeven. De bottleneck is het ontbreken van een geschikte samengestelde index (tenant_id, created_at), en dat valt buiten de toegestane wijzigingen.",
+  "input_tokens": 1788,
+  "output_tokens": 388,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.007456,
+  "usage_raw": {
+    "prompt_tokens": 1788,
+    "completion_tokens": 388,
+    "total_tokens": 2176,
+    "cost": 0.007456,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.007456,
+      "upstream_inference_prompt_cost": 0.003576,
+      "upstream_inference_completions_cost": 0.00388
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 3.7,
+  "sql": "SELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-sonnet-5.5"
+}

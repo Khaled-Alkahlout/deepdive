@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH j AS MATERIALIZED (\n    SELECT pv.product_id,\n           ol.order_id,\n           pv.id AS variant_id,\n           ol.quantity,\n           ol.line_total_cents\n      FROM orders o\n      JOIN order_lines ol       ON ol.order_id = o.id\n      JOIN product_variants pv  ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nagg AS (\n    SELECT product_id,\n           sum(quantity)         AS quantity,\n           sum(line_total_cents) AS revenue_cents\n      FROM j\n     GROUP BY product_id\n),\noc AS (\n    SELECT product_id, count(*) AS order_count\n      FROM (SELECT DISTINCT product_id, order_id FROM j) d\n     GROUP BY product_id\n),\nvc AS (\n    SELECT product_id, count(*) AS variant_count\n      FROM (SELECT DISTINCT product_id, variant_id FROM j) d\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       oc.order_count,\n       agg.quantity,\n       agg.revenue_cents,\n       vc.variant_count\n  FROM agg\n  JOIN oc ON oc.product_id = agg.product_id\n  JOIN vc ON vc.product_id = agg.product_id\n  JOIN products p ON p.id = agg.product_id\n ORDER BY agg.quantity DESC, agg.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe joins en filters worden één keer uitgevoerd in een smalle CTE. De `count(DISTINCT)`-berekeningen gebeuren daarna op alleen id-kolommen via hash-aggregatie, in plaats van op een gesorteerde set van 113 bytes breed die naar schijf lekte. `products` wordt pas na de aggregatie gejoind, zodat de brede kolommen niet meer door de sort gaan. De uitvoerkolommen, hun types en de ORDER BY zijn ongewijzigd.",
+  "input_tokens": 7365,
+  "output_tokens": 2113,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.03586,
+  "usage_raw": {
+    "prompt_tokens": 7365,
+    "completion_tokens": 2113,
+    "total_tokens": 9478,
+    "cost": 0.03586,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.03586,
+      "upstream_inference_prompt_cost": 0.01473,
+      "upstream_inference_completions_cost": 0.02113
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1303,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 17.4,
+  "sql": "WITH j AS MATERIALIZED (\n    SELECT pv.product_id,\n           ol.order_id,\n           pv.id AS variant_id,\n           ol.quantity,\n           ol.line_total_cents\n      FROM orders o\n      JOIN order_lines ol       ON ol.order_id = o.id\n      JOIN product_variants pv  ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nagg AS (\n    SELECT product_id,\n           sum(quantity)         AS quantity,\n           sum(line_total_cents) AS revenue_cents\n      FROM j\n     GROUP BY product_id\n),\noc AS (\n    SELECT product_id, count(*) AS order_count\n      FROM (SELECT DISTINCT product_id, order_id FROM j) d\n     GROUP BY product_id\n),\nvc AS (\n    SELECT product_id, count(*) AS variant_count\n      FROM (SELECT DISTINCT product_id, variant_id FROM j) d\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       oc.order_count,\n       agg.quantity,\n       agg.revenue_cents,\n       vc.variant_count\n  FROM agg\n  JOIN oc ON oc.product_id = agg.product_id\n  JOIN vc ON vc.product_id = agg.product_id\n  JOIN products p ON p.id = agg.product_id\n ORDER BY agg.quantity DESC, agg.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

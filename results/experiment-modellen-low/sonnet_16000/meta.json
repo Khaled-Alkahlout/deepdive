@@ -1,0 +1,23 @@
+{
+  "model": "anthropic/claude-sonnet-5.5",
+  "provider": "openrouter",
+  "effort": "low",
+  "max_tokens": 16000,
+  "reps": 3,
+  "val_reps": 7,
+  "cases": [
+    "top_products",
+    "top_customers",
+    "audit_log_page",
+    "revenue_orders"
+  ],
+  "conditions": [
+    "C1_query",
+    "C2_schema",
+    "C3_plan",
+    "C4_stats"
+  ],
+  "label": "modellen-low|sonnet|16000",
+  "started": "2026-11-11T23:58:22",
+  "dry_run": false
+}

@@ -1,0 +1,33 @@
+{
+  "text": "De query is al efficiënt: het plan gebruikt `audit_log_tenant_created_at_idx` en levert 200 rijen in ongeveer 0,4 ms met 180 buffer-hits. Een herschrijving zou zonder extra indexen weinig opleveren, en de optionele filters met `IS NULL` zijn in een custom plan al weggeoptimaliseerd. Daarom geef ik de originele query ongewijzigd terug.\n\n```sql\n-- name: audit_log_page\n-- owner: compliance\n-- params: tenant_id, table_name, row_id, from, to, limit, offset\n-- One page of the audit trail, newest first. table_name and row_id are\n-- optional; pass NULL to skip the filter.\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s\n```",
+  "input_tokens": 3066,
+  "output_tokens": 887,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0007501,
+  "usage_raw": {
+    "prompt_tokens": 3066,
+    "completion_tokens": 887,
+    "total_tokens": 3953,
+    "cost": 0.0007501,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0007501,
+      "upstream_inference_prompt_cost": 0.0003066,
+      "upstream_inference_completions_cost": 0.0004435
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 372,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 4.1,
+  "sql": "-- name: audit_log_page\n-- owner: compliance\n-- params: tenant_id, table_name, row_id, from, to, limit, offset\n-- One page of the audit trail, newest first. table_name and row_id are\n-- optional; pass NULL to skip the filter.\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

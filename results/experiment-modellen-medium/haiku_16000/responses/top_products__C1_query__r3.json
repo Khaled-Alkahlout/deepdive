@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH f_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nline_agg AS (\n    SELECT ol.order_id,\n           ol.variant_id::uuid       AS variant_id,\n           sum(ol.quantity)          AS quantity,\n           sum(ol.line_total_cents)  AS revenue_cents\n      FROM order_lines ol\n      JOIN f_orders fo ON fo.id = ol.order_id\n     GROUP BY ol.order_id, ol.variant_id::uuid\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT la.order_id)  AS order_count,\n       sum(la.quantity)             AS quantity,\n       sum(la.revenue_cents)        AS revenue_cents,\n       count(DISTINCT pv.id)        AS variant_count\n  FROM line_agg la\n  JOIN product_variants pv ON pv.id = la.variant_id\n  JOIN products p          ON p.id = pv.product_id\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe orderfilter wordt eerst in een CTE uitgevoerd, en order-regels worden per order en variant voorgeaggregeerd, zodat er minder rijen naar de catalogusjoins gaan. De aggregaten blijven gelijk, omdat sommen van deelsommen gelijk zijn aan de totale som en `count(DISTINCT ...)` nog steeds op de juiste niveaus wordt berekend. Bij gelijke waarden voor `quantity` en `revenue_cents` is de volgorde niet deterministisch, net als in het origineel.",
+  "input_tokens": 824,
+  "output_tokens": 2912,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0015384,
+  "usage_raw": {
+    "prompt_tokens": 824,
+    "completion_tokens": 2912,
+    "total_tokens": 3736,
+    "cost": 0.0015384,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0015384,
+      "upstream_inference_prompt_cost": 8.24e-05,
+      "upstream_inference_completions_cost": 0.001456
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2200,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 12.6,
+  "sql": "WITH f_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nline_agg AS (\n    SELECT ol.order_id,\n           ol.variant_id::uuid       AS variant_id,\n           sum(ol.quantity)          AS quantity,\n           sum(ol.line_total_cents)  AS revenue_cents\n      FROM order_lines ol\n      JOIN f_orders fo ON fo.id = ol.order_id\n     GROUP BY ol.order_id, ol.variant_id::uuid\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT la.order_id)  AS order_count,\n       sum(la.quantity)             AS quantity,\n       sum(la.revenue_cents)        AS revenue_cents,\n       count(DISTINCT pv.id)        AS variant_count\n  FROM line_agg la\n  JOIN product_variants pv ON pv.id = la.variant_id\n  JOIN products p          ON p.id = pv.product_id\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

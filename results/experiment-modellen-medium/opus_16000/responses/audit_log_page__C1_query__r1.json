@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH hits AS (\n    (SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action, a.old_data,\n            a.new_data, a.actor_id, a.is_system, a.created_at\n       FROM audit_log a\n      WHERE %(table_name)s::text IS NULL\n        AND %(row_id)s::uuid IS NULL\n        AND a.tenant_id = %(tenant_id)s\n        AND a.created_at >= %(from)s\n        AND a.created_at <  %(to)s\n      ORDER BY a.created_at DESC, a.id DESC\n      LIMIT %(limit)s + %(offset)s)\n    UNION ALL\n    (SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action, a.old_data,\n            a.new_data, a.actor_id, a.is_system, a.created_at\n       FROM audit_log a\n      WHERE %(table_name)s::text IS NOT NULL\n        AND %(row_id)s::uuid IS NULL\n        AND a.tenant_id = %(tenant_id)s\n        AND a.table_name = %(table_name)s\n        AND a.created_at >= %(from)s\n        AND a.created_at <  %(to)s\n      ORDER BY a.created_at DESC, a.id DESC\n      LIMIT %(limit)s + %(offset)s)\n    UNION ALL\n    (SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action, a.old_data,\n            a.new_data, a.actor_id, a.is_system, a.created_at\n       FROM audit_log a\n      WHERE %(table_name)s::text IS NULL\n        AND %(row_id)s::uuid IS NOT NULL\n        AND a.tenant_id = %(tenant_id)s\n        AND a.row_id = %(row_id)s\n        AND a.created_at >= %(from)s\n        AND a.created_at <  %(to)s\n      ORDER BY a.created_at DESC, a.id DESC\n      LIMIT %(limit)s + %(offset)s)\n    UNION ALL\n    (SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action, a.old_data,\n            a.new_data, a.actor_id, a.is_system, a.created_at\n       FROM audit_log a\n      WHERE %(table_name)s::text IS NOT NULL\n        AND %(row_id)s::uuid IS NOT NULL\n        AND a.tenant_id = %(tenant_id)s\n        AND a.table_name = %(table_name)s\n        AND a.row_id = %(row_id)s\n        AND a.created_at >= %(from)s\n        AND a.created_at <  %(to)s\n      ORDER BY a.created_at DESC, a.id DESC\n      LIMIT %(limit)s + %(offset)s)\n)\nSELECT h.id,\n       h.tenant_id,\n       h.table_name,\n       h.row_id,\n       h.action,\n       h.old_data,\n       h.new_data,\n       h.actor_id,\n       h.is_system,\n       h.created_at\n  FROM hits h\n ORDER BY h.created_at DESC, h.id DESC\n LIMIT %(limit)s OFFSET %(offset)s\n```\n\nDe `(param IS NULL OR kolom = param)`-constructie verhindert dat de planner, vooral bij generieke plannen met server-side binding, een gericht indexpad kiest. Daarom is de query opgesplitst in vier elkaar uitsluitende takken. Door de parametercondities als one-time filter wordt per aanroep maar één tak uitgevoerd, met een eigen indexgeschikt predicaat en een vroege stop via `LIMIT limit+offset`. Een NULL-limit of NULL-offset maakt de binnenste limiet NULL, dus onbeperkt, waardoor het resultaat identiek blijft aan het origineel.",
+  "input_tokens": 735,
+  "output_tokens": 2150,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.04594,
+  "usage_raw": {
+    "prompt_tokens": 735,
+    "completion_tokens": 2150,
+    "total_tokens": 2885,
+    "cost": 0.04594,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.04594,
+      "upstream_inference_prompt_cost": 0.00294,
+      "upstream_inference_completions_cost": 0.043
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 811,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 19.7,
+  "sql": "WITH hits AS (\n    (SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action, a.old_data,\n            a.new_data, a.actor_id, a.is_system, a.created_at\n       FROM audit_log a\n      WHERE %(table_name)s::text IS NULL\n        AND %(row_id)s::uuid IS NULL\n        AND a.tenant_id = %(tenant_id)s\n        AND a.created_at >= %(from)s\n        AND a.created_at <  %(to)s\n      ORDER BY a.created_at DESC, a.id DESC\n      LIMIT %(limit)s + %(offset)s)\n    UNION ALL\n    (SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action, a.old_data,\n            a.new_data, a.actor_id, a.is_system, a.created_at\n       FROM audit_log a\n      WHERE %(table_name)s::text IS NOT NULL\n        AND %(row_id)s::uuid IS NULL\n        AND a.tenant_id = %(tenant_id)s\n        AND a.table_name = %(table_name)s\n        AND a.created_at >= %(from)s\n        AND a.created_at <  %(to)s\n      ORDER BY a.created_at DESC, a.id DESC\n      LIMIT %(limit)s + %(offset)s)\n    UNION ALL\n    (SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action, a.old_data,\n            a.new_data, a.actor_id, a.is_system, a.created_at\n       FROM audit_log a\n      WHERE %(table_name)s::text IS NULL\n        AND %(row_id)s::uuid IS NOT NULL\n        AND a.tenant_id = %(tenant_id)s\n        AND a.row_id = %(row_id)s\n        AND a.created_at >= %(from)s\n        AND a.created_at <  %(to)s\n      ORDER BY a.created_at DESC, a.id DESC\n      LIMIT %(limit)s + %(offset)s)\n    UNION ALL\n    (SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action, a.old_data,\n            a.new_data, a.actor_id, a.is_system, a.created_at\n       FROM audit_log a\n      WHERE %(table_name)s::text IS NOT NULL\n        AND %(row_id)s::uuid IS NOT NULL\n        AND a.tenant_id = %(tenant_id)s\n        AND a.table_name = %(table_name)s\n        AND a.row_id = %(row_id)s\n        AND a.created_at >= %(from)s\n        AND a.created_at <  %(to)s\n      ORDER BY a.created_at DESC, a.id DESC\n      LIMIT %(limit)s + %(offset)s)\n)\nSELECT h.id,\n       h.tenant_id,\n       h.table_name,\n       h.row_id,\n       h.action,\n       h.old_data,\n       h.new_data,\n       h.actor_id,\n       h.is_system,\n       h.created_at\n  FROM hits h\n ORDER BY h.created_at DESC, h.id DESC\n LIMIT %(limit)s OFFSET %(offset)s",
+  "model": "anthropic/claude-opus-5.5"
+}

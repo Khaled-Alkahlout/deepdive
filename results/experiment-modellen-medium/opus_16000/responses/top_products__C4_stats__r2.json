@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH g AS (\n    SELECT pv.product_id,\n           ol.order_id,\n           pv.id                     AS variant_id,\n           sum(ol.quantity)          AS q,\n           sum(ol.line_total_cents)  AS r,\n           GROUPING(ol.order_id)     AS is_variant_row\n      FROM order_lines ol\n      JOIN orders o            ON o.id = ol.order_id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY GROUPING SETS ((pv.product_id, ol.order_id),\n                             (pv.product_id, pv.id))\n), agg AS (\n    SELECT product_id,\n           count(*) FILTER (WHERE is_variant_row = 0)         AS order_count,\n           (sum(q) FILTER (WHERE is_variant_row = 0))::bigint AS quantity,\n           sum(r) FILTER (WHERE is_variant_row = 0)           AS revenue_cents,\n           count(*) FILTER (WHERE is_variant_row = 1)         AS variant_count\n      FROM g\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe twee `count(DISTINCT ...)` dwongen een sortering op (p.id, o.id) af die naar schijf liep. Ik vervang ze door één gehashte GROUPING SETS-aggregatie per (product, order) en per (product, variant). Daarna tel en sommeer ik per product, waarbij `quantity` naar bigint wordt gecast zodat het type gelijk blijft. Pas daarna worden de ~1750 resultaatrijen aan `products` gekoppeld, in plaats van alle ~81k regels met de brede productkolommen mee te sorteren.",
+  "input_tokens": 7365,
+  "output_tokens": 2276,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.07498,
+  "usage_raw": {
+    "prompt_tokens": 7365,
+    "completion_tokens": 2276,
+    "total_tokens": 9641,
+    "cost": 0.07498,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.07498,
+      "upstream_inference_prompt_cost": 0.02946,
+      "upstream_inference_completions_cost": 0.04552
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1455,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 22.2,
+  "sql": "WITH g AS (\n    SELECT pv.product_id,\n           ol.order_id,\n           pv.id                     AS variant_id,\n           sum(ol.quantity)          AS q,\n           sum(ol.line_total_cents)  AS r,\n           GROUPING(ol.order_id)     AS is_variant_row\n      FROM order_lines ol\n      JOIN orders o            ON o.id = ol.order_id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY GROUPING SETS ((pv.product_id, ol.order_id),\n                             (pv.product_id, pv.id))\n), agg AS (\n    SELECT product_id,\n           count(*) FILTER (WHERE is_variant_row = 0)         AS order_count,\n           (sum(q) FILTER (WHERE is_variant_row = 0))::bigint AS quantity,\n           sum(r) FILTER (WHERE is_variant_row = 0)           AS revenue_cents,\n           count(*) FILTER (WHERE is_variant_row = 1)         AS variant_count\n      FROM g\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

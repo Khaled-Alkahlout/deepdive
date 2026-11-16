@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH gefilterde_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\ngefilterde_lines AS (\n    SELECT ol.order_id, ol.variant_id::uuid AS variant_id, ol.quantity, ol.line_total_cents\n      FROM order_lines ol\n      JOIN gefilterde_orders go ON go.id = ol.order_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT gl.order_id)  AS order_count,\n       sum(gl.quantity)             AS quantity,\n       sum(gl.line_total_cents)     AS revenue_cents,\n       count(DISTINCT pv.id)        AS variant_count\n  FROM gefilterde_lines gl\n  JOIN product_variants pv ON pv.id = gl.variant_id\n  JOIN products p          ON p.id = pv.product_id\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe orderfilter wordt eerst apart uitgevoerd, zodat alleen de relevante order_lines worden gejoind en de cast en de join met het catalogusdeel minder rijen verwerken. Het resultaat blijft gelijk aan het origineel, inclusief de cast `variant_id::uuid` die foutgedrag bewaart. Ik heb de ORDER BY ongewijzigd gelaten; bij gelijke quantity en revenue is de volgorde daardoor ook niet deterministisch, zoals in het origineel.",
+  "input_tokens": 2398,
+  "output_tokens": 1676,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0010778,
+  "usage_raw": {
+    "prompt_tokens": 2398,
+    "completion_tokens": 1676,
+    "total_tokens": 4074,
+    "cost": 0.0010778,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0010778,
+      "upstream_inference_prompt_cost": 0.0002398,
+      "upstream_inference_completions_cost": 0.000838
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1011,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 8.5,
+  "sql": "WITH gefilterde_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\ngefilterde_lines AS (\n    SELECT ol.order_id, ol.variant_id::uuid AS variant_id, ol.quantity, ol.line_total_cents\n      FROM order_lines ol\n      JOIN gefilterde_orders go ON go.id = ol.order_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT gl.order_id)  AS order_count,\n       sum(gl.quantity)             AS quantity,\n       sum(gl.line_total_cents)     AS revenue_cents,\n       count(DISTINCT pv.id)        AS variant_count\n  FROM gefilterde_lines gl\n  JOIN product_variants pv ON pv.id = gl.variant_id\n  JOIN products p          ON p.id = pv.product_id\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

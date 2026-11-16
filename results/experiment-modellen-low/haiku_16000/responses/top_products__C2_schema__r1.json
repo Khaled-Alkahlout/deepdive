@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: top_products\n-- owner: merchandising\n-- params: tenant_id, from, to, limit\n-- Best sellers by units and revenue. Line items reference the variant by its\n-- string id (integration feed), so it is cast when joining the catalog.\nWITH filtered_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nline_agg AS (\n    SELECT ol.order_id,\n           pv.id         AS variant_id,\n           pv.product_id,\n           ol.quantity,\n           ol.line_total_cents\n      FROM filtered_orders fo\n      JOIN order_lines ol      ON ol.order_id = fo.id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT la.order_id)     AS order_count,\n       sum(la.quantity)                AS quantity,\n       sum(la.line_total_cents)        AS revenue_cents,\n       count(DISTINCT la.variant_id)   AS variant_count\n  FROM line_agg la\n  JOIN products p ON p.id = la.product_id\n GROUP BY p.id\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe orders worden eerst gefilterd in een CTE, zodat de joins alleen op de relevante orderregels draaien. Het groeperen op `p.id` alleen is gelijkwaardig omdat `sku`, `name`, `brand` en `currency` functioneel afhankelijk zijn van de primary key. Bij gelijke `quantity` en `revenue_cents` blijft de volgorde van rijen niet-deterministisch, zoals in het origineel.",
+  "input_tokens": 2398,
+  "output_tokens": 1740,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0011098,
+  "usage_raw": {
+    "prompt_tokens": 2398,
+    "completion_tokens": 1740,
+    "total_tokens": 4138,
+    "cost": 0.0011098,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0011098,
+      "upstream_inference_prompt_cost": 0.0002398,
+      "upstream_inference_completions_cost": 0.00087
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1036,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 8.1,
+  "sql": "-- name: top_products\n-- owner: merchandising\n-- params: tenant_id, from, to, limit\n-- Best sellers by units and revenue. Line items reference the variant by its\n-- string id (integration feed), so it is cast when joining the catalog.\nWITH filtered_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nline_agg AS (\n    SELECT ol.order_id,\n           pv.id         AS variant_id,\n           pv.product_id,\n           ol.quantity,\n           ol.line_total_cents\n      FROM filtered_orders fo\n      JOIN order_lines ol      ON ol.order_id = fo.id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT la.order_id)     AS order_count,\n       sum(la.quantity)                AS quantity,\n       sum(la.line_total_cents)        AS revenue_cents,\n       count(DISTINCT la.variant_id)   AS variant_count\n  FROM line_agg la\n  JOIN products p ON p.id = la.product_id\n GROUP BY p.id\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

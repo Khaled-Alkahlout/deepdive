@@ -1,0 +1,33 @@
+{
+  "text": "Het grootste voordeel zit in aggregeren op variantniveau vóór de join met products, zodat de GROUP BY niet over brede kolommen (sku, name, brand, currency) hoeft. Ik filter eerst orders (met de index op created_at), aggregeer per variant en rol daarna op naar product.\n\nLet op de semantiek: `count(DISTINCT o.id)` per product kan niet uit per-variant tellingen worden opgeteld (een order kan meerdere varianten van hetzelfde product bevatten). Daarom aggregeer ik per product op id met de DISTINCT-tellingen behouden, maar groepeer ik alleen op `p.id` (primary key) en haal de brede kolommen er functioneel afhankelijk bij. Dat levert hetzelfde resultaat.\n\n```sql\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM (\n        SELECT pv.product_id,\n               count(DISTINCT o.id)     AS order_count,\n               sum(ol.quantity)         AS quantity,\n               sum(ol.line_total_cents) AS revenue_cents,\n               count(DISTINCT pv.id)    AS variant_count\n          FROM orders o\n          JOIN order_lines ol      ON ol.order_id = o.id\n          JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n         WHERE o.tenant_id = %(tenant_id)s\n           AND o.created_at >= %(from)s\n           AND o.created_at <  %(to)s\n           AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n         GROUP BY pv.product_id\n       ) a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe aggregatie gebeurt nu op één uuid-kolom (`pv.product_id`) in plaats van op vijf tekstkolommen, en de join met products gebeurt pas op het geaggregeerde resultaat. Het resultaat, de kolomvolgorde en de ORDER BY blijven gelijk aan het origineel.",
+  "input_tokens": 2398,
+  "output_tokens": 797,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.012766,
+  "usage_raw": {
+    "prompt_tokens": 2398,
+    "completion_tokens": 797,
+    "total_tokens": 3195,
+    "cost": 0.012766,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.012766,
+      "upstream_inference_prompt_cost": 0.004796,
+      "upstream_inference_completions_cost": 0.00797
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 5.9,
+  "sql": "SELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM (\n        SELECT pv.product_id,\n               count(DISTINCT o.id)     AS order_count,\n               sum(ol.quantity)         AS quantity,\n               sum(ol.line_total_cents) AS revenue_cents,\n               count(DISTINCT pv.id)    AS variant_count\n          FROM orders o\n          JOIN order_lines ol      ON ol.order_id = o.id\n          JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n         WHERE o.tenant_id = %(tenant_id)s\n           AND o.created_at >= %(from)s\n           AND o.created_at <  %(to)s\n           AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n         GROUP BY pv.product_id\n       ) a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "Zonder kennis van indexen of datavolumes zie ik geen veilige herschrijving die gegarandeerd sneller is. De optionele filters `(%(x)s IS NULL OR ...)` zijn al eenvoudig en worden met een generiek plan minder goed geoptimaliseerd. Maar een herschrijving met CASE of UNION ALL zou de semantiek of leesbaarheid niet verbeteren, en de ORDER BY met LIMIT kan al een index op (tenant_id, created_at, id) benutten. Daarom geef ik de originele query ongewijzigd terug.\n\n```sql\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s\n```\n\nEr is geen herschrijving die zonder indexwijzigingen of statistieken aantoonbaar sneller is en altijd identieke resultaten geeft. De query is al goed gevormd voor een index op (tenant_id, created_at DESC, id DESC). Bij grote offsets kan keyset-paginering helpen, maar dat verandert de parameters en is hier dus niet toegestaan.",
+  "input_tokens": 735,
+  "output_tokens": 611,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.00758,
+  "usage_raw": {
+    "prompt_tokens": 735,
+    "completion_tokens": 611,
+    "total_tokens": 1346,
+    "cost": 0.00758,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.00758,
+      "upstream_inference_prompt_cost": 0.00147,
+      "upstream_inference_completions_cost": 0.00611
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 4.7,
+  "sql": "SELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

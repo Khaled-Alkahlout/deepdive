@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH lines AS (\n    SELECT ol.order_id,\n           ol.variant_id,\n           sum(ol.quantity)         AS quantity,\n           sum(ol.line_total_cents) AS revenue_cents\n      FROM orders o\n      JOIN order_lines ol ON ol.order_id = o.id\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY ol.order_id, ol.variant_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT l.order_id)  AS order_count,\n       sum(l.quantity)             AS quantity,\n       sum(l.revenue_cents)        AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM lines l\n  JOIN product_variants pv ON pv.id = l.variant_id::uuid\n  JOIN products p          ON p.id = pv.product_id\n GROUP BY p.id\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe orderregels worden eerst per order en variant-string samengevoegd. Daardoor gebeuren de `::uuid`-cast en de joins op minder rijen, terwijl de sommen en de distinct-tellingen gelijk blijven. De cast laat ik bewust staan, omdat `pv.id::text = ol.variant_id` niet equivalent is (hoofdletters, notatie zonder streepjes, foutgedrag bij ongeldige strings). Groeperen op alleen de primaire sleutel `p.id` geeft hetzelfde resultaat met een smallere groepeersleutel.",
+  "input_tokens": 824,
+  "output_tokens": 1076,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.024816,
+  "usage_raw": {
+    "prompt_tokens": 824,
+    "completion_tokens": 1076,
+    "total_tokens": 1900,
+    "cost": 0.024816,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.024816,
+      "upstream_inference_prompt_cost": 0.003296,
+      "upstream_inference_completions_cost": 0.02152
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 420,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 11.3,
+  "sql": "WITH lines AS (\n    SELECT ol.order_id,\n           ol.variant_id,\n           sum(ol.quantity)         AS quantity,\n           sum(ol.line_total_cents) AS revenue_cents\n      FROM orders o\n      JOIN order_lines ol ON ol.order_id = o.id\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY ol.order_id, ol.variant_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT l.order_id)  AS order_count,\n       sum(l.quantity)             AS quantity,\n       sum(l.revenue_cents)        AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM lines l\n  JOIN product_variants pv ON pv.id = l.variant_id::uuid\n  JOIN products p          ON p.id = pv.product_id\n GROUP BY p.id\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

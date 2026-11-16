@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nIk zie geen zinvolle herschrijving: de query is al een eenvoudige filter-scan zonder joins of subqueries, en hij draait in zo'n 9 ms op 60.000 rijen. Een betere toegangsroute vraagt om een nieuwe index, bijvoorbeeld op (tenant_id, created_at), en dat mag hier niet. Daarom geef ik de originele query ongewijzigd terug.",
+  "input_tokens": 2339,
+  "output_tokens": 420,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.008878,
+  "usage_raw": {
+    "prompt_tokens": 2339,
+    "completion_tokens": 420,
+    "total_tokens": 2759,
+    "cost": 0.008878,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.008878,
+      "upstream_inference_prompt_cost": 0.004678,
+      "upstream_inference_completions_cost": 0.0042
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 134,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 3.9,
+  "sql": "SELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-sonnet-5.5"
+}

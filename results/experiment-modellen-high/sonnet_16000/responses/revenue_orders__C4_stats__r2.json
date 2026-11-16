@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nIk zie geen zinvolle herschrijving: de query is al een eenvoudige filter-scan op één tabel, en het plan (8,9 ms voor ~23.600 rijen) is dicht bij wat mogelijk is zonder nieuwe index. Een andere vorm, zoals een CTE of een trucje met `+ 0`, levert dezelfde rijen op maar geen betrouwbare winst. Een samengestelde index op `(tenant_id, created_at)` zou wel helpen, maar die mag ik hier niet voorstellen.",
+  "input_tokens": 2339,
+  "output_tokens": 462,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.009298,
+  "usage_raw": {
+    "prompt_tokens": 2339,
+    "completion_tokens": 462,
+    "total_tokens": 2801,
+    "cost": 0.009298,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.009298,
+      "upstream_inference_prompt_cost": 0.004678,
+      "upstream_inference_completions_cost": 0.00462
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 136,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 4.2,
+  "sql": "SELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-sonnet-5.5"
+}

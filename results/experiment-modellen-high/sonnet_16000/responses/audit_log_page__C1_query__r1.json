@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: audit_log_page\n-- owner: compliance\n-- params: tenant_id, table_name, row_id, from, to, limit, offset\n-- One page of the audit trail, newest first. table_name and row_id are\n-- optional; pass NULL to skip the filter.\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s\n```\n\nIk laat de query ongewijzigd. Zonder kennis van de indexen of de uniekheid van `id` is er geen herschrijving die gegarandeerd sneller is en identiek blijft. De optionele filters kunnen niet door `COALESCE` of een vergelijkbare constructie worden vervangen, omdat rijen met NULL-waarden dan anders worden behandeld. Een \"deferred join\" levert hier weinig op, omdat PostgreSQL de TOAST-kolommen (`old_data`/`new_data`) pas voor de uiteindelijke outputrijen uitleest. De grootste winst zit waarschijnlijk in een index op `(tenant_id, created_at DESC, id DESC)`, maar dat valt buiten de regels.",
+  "input_tokens": 735,
+  "output_tokens": 1300,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.01447,
+  "usage_raw": {
+    "prompt_tokens": 735,
+    "completion_tokens": 1300,
+    "total_tokens": 2035,
+    "cost": 0.01447,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.01447,
+      "upstream_inference_prompt_cost": 0.00147,
+      "upstream_inference_completions_cost": 0.013
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 679,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 11.0,
+  "sql": "-- name: audit_log_page\n-- owner: compliance\n-- params: tenant_id, table_name, row_id, from, to, limit, offset\n-- One page of the audit trail, newest first. table_name and row_id are\n-- optional; pass NULL to skip the filter.\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

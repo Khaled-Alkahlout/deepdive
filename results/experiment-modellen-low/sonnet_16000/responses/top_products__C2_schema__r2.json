@@ -1,0 +1,33 @@
+{
+  "text": "Het grootste knelpunt is dat er per orderregel eerst gejoind wordt met varianten en producten, en pas daarna geaggregeerd. Ik aggregeer eerst per variant, zodat de join met products en de count(DISTINCT) over veel minder rijen gaan.\n\nLet op de semantiek:\n- `count(DISTINCT o.id)` per product kan niet worden opgeteld uit per-variant-aantallen, omdat een order meerdere varianten van hetzelfde product kan bevatten. Daarom aggregeer ik niet per variant, maar per product, met de distinct order-ids op productniveau.\n- Het resultaat blijft identiek: de joins zijn inner joins en de filters staan alleen op orders.\n- De cast `ol.variant_id::uuid` blijft behouden. Een ongeldige uuid zou in het origineel ook een fout geven. Door de volgorde van evaluatie kan dat verschillen, maar de cast gebeurt nog steeds op dezelfde rijen die de filters passeren.\n\nOmdat ik het gedrag niet kan garanderen te verbeteren zonder het risico op een andere foutafhandeling, en de bestaande structuur (filter op orders, daarna joins) al redelijk is, geef ik de originele query ongewijzigd terug.\n\n```sql\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT o.id)        AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM order_lines ol\n  JOIN orders o           ON o.id = ol.order_id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p         ON p.id = pv.product_id\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nIk zie geen herschrijving die zonder nieuwe indexen aantoonbaar sneller is en gegarandeerd hetzelfde resultaat geeft. Het ontbreken van een index op `order_lines.order_id` is het echte knelpunt, maar dat valt buiten de toegestane wijzigingen.",
+  "input_tokens": 2398,
+  "output_tokens": 922,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.014016,
+  "usage_raw": {
+    "prompt_tokens": 2398,
+    "completion_tokens": 922,
+    "total_tokens": 3320,
+    "cost": 0.014016,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.014016,
+      "upstream_inference_prompt_cost": 0.004796,
+      "upstream_inference_completions_cost": 0.00922
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 7.6,
+  "sql": "SELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT o.id)        AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM order_lines ol\n  JOIN orders o           ON o.id = ol.order_id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p         ON p.id = pv.product_id\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s\n```\n\nHet origineel was traag door een geneste lus tussen twee CTE-scans. De planner schatte daar 1 rij, waardoor de HashAggregate 9799 keer werd doorlopen en er 48 miljoen rijen in de join-filter belandden. De herschrijving berekent omzet, aantal en laatste orderdatum in één aggregatie over alleen de orders van klanten van de tenant. `max(created_at)` is daarbij gelijk aan de `DISTINCT ON ... created_at DESC`, omdat `created_at` NOT NULL is, en het vensterfilter verhuist naar `HAVING`.",
+  "input_tokens": 3478,
+  "output_tokens": 792,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.029752,
+  "usage_raw": {
+    "prompt_tokens": 3478,
+    "completion_tokens": 792,
+    "total_tokens": 4270,
+    "cost": 0.029752,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.029752,
+      "upstream_inference_prompt_cost": 0.013912,
+      "upstream_inference_completions_cost": 0.01584
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 334,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 8.7,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

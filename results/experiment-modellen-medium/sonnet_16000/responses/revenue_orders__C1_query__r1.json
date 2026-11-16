@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nDe query is al minimaal: één tabel, simpele sargable filters op tenant_id en een created_at-bereik, en een kleine IN-lijst op status. Zonder indexen of schemawijzigingen te mogen toevoegen en zonder ORDER BY, aggregatie of joins valt er niets te herschrijven wat het resultaat gelijk houdt en sneller is, dus geef ik de originele query ongewijzigd terug.",
+  "input_tokens": 620,
+  "output_tokens": 287,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.00411,
+  "usage_raw": {
+    "prompt_tokens": 620,
+    "completion_tokens": 287,
+    "total_tokens": 907,
+    "cost": 0.00411,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.00411,
+      "upstream_inference_prompt_cost": 0.00124,
+      "upstream_inference_completions_cost": 0.00287
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 3.0,
+  "sql": "SELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-sonnet-5.5"
+}

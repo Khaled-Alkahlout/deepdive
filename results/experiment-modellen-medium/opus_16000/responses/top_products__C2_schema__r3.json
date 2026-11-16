@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH agg AS (\n    SELECT pv.product_id,\n           count(DISTINCT o.id)     AS order_count,\n           sum(ol.quantity)         AS quantity,\n           sum(ol.line_total_cents) AS revenue_cents,\n           count(DISTINCT pv.id)    AS variant_count\n      FROM orders o\n      JOIN order_lines ol      ON ol.order_id = o.id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY pv.product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe herschreven query aggregeert eerst per `product_id` op een smalle sleutel (uuid). Pas daarna worden de producten via de primaire sleutel opgehaald. Daardoor hoeven de tekstkolommen van `products` niet mee door het sorteren of hashen van de GROUP BY.\n\nDe cast `ol.variant_id::uuid` blijft bewust aan de kant van `order_lines` staan. Een tekstvergelijking zou bij bijvoorbeeld hoofdletter-uuid's of ongeldige waarden een ander resultaat of foutgedrag geven. De inner join op `products` laat geen rijen vallen, omdat `pv.product_id` NOT NULL is en een foreign key heeft.",
+  "input_tokens": 2398,
+  "output_tokens": 1422,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.038032,
+  "usage_raw": {
+    "prompt_tokens": 2398,
+    "completion_tokens": 1422,
+    "total_tokens": 3820,
+    "cost": 0.038032,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.038032,
+      "upstream_inference_prompt_cost": 0.009592,
+      "upstream_inference_completions_cost": 0.02844
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 753,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 13.7,
+  "sql": "WITH agg AS (\n    SELECT pv.product_id,\n           count(DISTINCT o.id)     AS order_count,\n           sum(ol.quantity)         AS quantity,\n           sum(ol.line_total_cents) AS revenue_cents,\n           count(DISTINCT pv.id)    AS variant_count\n      FROM orders o\n      JOIN order_lines ol      ON ol.order_id = o.id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY pv.product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

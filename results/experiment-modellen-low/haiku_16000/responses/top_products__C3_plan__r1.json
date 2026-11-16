@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: top_products\n-- owner: merchandising\n-- params: tenant_id, from, to, limit\nWITH ord AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nline_v AS (\n    SELECT ol.order_id,\n           ol.quantity,\n           ol.line_total_cents,\n           ol.variant_id::uuid AS variant_id\n      FROM order_lines ol\n      JOIN ord ON ord.id = ol.order_id\n),\nprod AS (\n    SELECT pv.product_id,\n           lv.order_id,\n           lv.variant_id,\n           lv.quantity,\n           lv.line_total_cents\n      FROM line_v lv\n      JOIN product_variants pv ON pv.id = lv.variant_id\n),\nagg AS (\n    SELECT product_id,\n           count(DISTINCT order_id)     AS order_count,\n           sum(quantity)                AS quantity,\n           sum(line_total_cents)        AS revenue_cents,\n           count(DISTINCT variant_id)   AS variant_count\n      FROM prod\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe orderfilter wordt eerst apart toegepast, zodat de aggregatie niet op de volledige join met `orders` hoeft te draaien en de dure externe sort op `(p.id, o.id)` verdwijnt. Het joinen met `products` gebeurt pas na de aggregatie, op één rij per product. Tie-breaking in de ORDER BY is gelijk aan het origineel, dus de volgorde bij gelijke waarden blijft even willekeurig als voorheen.",
+  "input_tokens": 4239,
+  "output_tokens": 2771,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0018094,
+  "usage_raw": {
+    "prompt_tokens": 4239,
+    "completion_tokens": 2771,
+    "total_tokens": 7010,
+    "cost": 0.0018094,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0018094,
+      "upstream_inference_prompt_cost": 0.0004239,
+      "upstream_inference_completions_cost": 0.0013855
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2003,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 12.1,
+  "sql": "-- name: top_products\n-- owner: merchandising\n-- params: tenant_id, from, to, limit\nWITH ord AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nline_v AS (\n    SELECT ol.order_id,\n           ol.quantity,\n           ol.line_total_cents,\n           ol.variant_id::uuid AS variant_id\n      FROM order_lines ol\n      JOIN ord ON ord.id = ol.order_id\n),\nprod AS (\n    SELECT pv.product_id,\n           lv.order_id,\n           lv.variant_id,\n           lv.quantity,\n           lv.line_total_cents\n      FROM line_v lv\n      JOIN product_variants pv ON pv.id = lv.variant_id\n),\nagg AS (\n    SELECT product_id,\n           count(DISTINCT order_id)     AS order_count,\n           sum(quantity)                AS quantity,\n           sum(line_total_cents)        AS revenue_cents,\n           count(DISTINCT variant_id)   AS variant_count\n      FROM prod\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nDe query is al een eenvoudige selectie zonder joins, aggregaties of subqueries, met sargable predicaten op tenant_id en created_at. Zonder indexwijzigingen of schemawijzigingen valt er niets zinvols te herschrijven, en het origineel heeft geen ORDER BY die ik zou kunnen beïnvloeden. Daarom geef ik de query ongewijzigd terug.",
+  "input_tokens": 620,
+  "output_tokens": 280,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.00404,
+  "usage_raw": {
+    "prompt_tokens": 620,
+    "completion_tokens": 280,
+    "total_tokens": 900,
+    "cost": 0.00404,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.00404,
+      "upstream_inference_prompt_cost": 0.00124,
+      "upstream_inference_completions_cost": 0.0028
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 2.8,
+  "sql": "SELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-sonnet-5.5"
+}

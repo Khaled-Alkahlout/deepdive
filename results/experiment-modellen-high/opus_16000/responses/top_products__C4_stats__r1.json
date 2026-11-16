@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH agg AS (\n    SELECT pv.product_id,\n           ol.order_id,\n           pv.id                       AS variant_id,\n           sum(ol.quantity)            AS qty,\n           sum(ol.line_total_cents)    AS rev,\n           GROUPING(ol.order_id)       AS g_order\n      FROM order_lines ol\n      JOIN orders o            ON o.id = ol.order_id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY GROUPING SETS ((pv.product_id, ol.order_id),\n                             (pv.product_id, pv.id))\n),\nper_product AS (\n    SELECT product_id,\n           count(*)  FILTER (WHERE g_order = 0)          AS order_count,\n           (sum(qty) FILTER (WHERE g_order = 0))::bigint AS quantity,\n           sum(rev)  FILTER (WHERE g_order = 0)          AS revenue_cents,\n           count(*)  FILTER (WHERE g_order = 1)          AS variant_count\n      FROM agg\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       pp.variant_count\n  FROM per_product pp\n  JOIN products p ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe twee `count(DISTINCT ...)` dwongen een sortering op (p.id, o.id) af. Die sortering liep met een external merge naar schijf. Ik vervang ze door één hash-gebaseerde GROUPING SETS-aggregatie: per (product, order) en per (product, variant) wordt één rij gemaakt, en het tellen van die rijen geeft exact dezelfde distinct-aantallen, terwijl de sommen uit de order-set komen. De `products`-join gebeurt pas na de aggregatie op ongeveer 1.750 rijen, en de `::bigint`-cast houdt het type van `quantity` gelijk aan het origineel.",
+  "input_tokens": 7365,
+  "output_tokens": 2864,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.08674,
+  "usage_raw": {
+    "prompt_tokens": 7365,
+    "completion_tokens": 2864,
+    "total_tokens": 10229,
+    "cost": 0.08674,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.08674,
+      "upstream_inference_prompt_cost": 0.02946,
+      "upstream_inference_completions_cost": 0.05728
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2008,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 27.0,
+  "sql": "WITH agg AS (\n    SELECT pv.product_id,\n           ol.order_id,\n           pv.id                       AS variant_id,\n           sum(ol.quantity)            AS qty,\n           sum(ol.line_total_cents)    AS rev,\n           GROUPING(ol.order_id)       AS g_order\n      FROM order_lines ol\n      JOIN orders o            ON o.id = ol.order_id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY GROUPING SETS ((pv.product_id, ol.order_id),\n                             (pv.product_id, pv.id))\n),\nper_product AS (\n    SELECT product_id,\n           count(*)  FILTER (WHERE g_order = 0)          AS order_count,\n           (sum(qty) FILTER (WHERE g_order = 0))::bigint AS quantity,\n           sum(rev)  FILTER (WHERE g_order = 0)          AS revenue_cents,\n           count(*)  FILTER (WHERE g_order = 1)          AS variant_count\n      FROM agg\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       pp.variant_count\n  FROM per_product pp\n  JOIN products p ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

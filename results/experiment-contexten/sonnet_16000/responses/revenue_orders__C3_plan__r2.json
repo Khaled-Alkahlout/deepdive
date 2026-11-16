@@ -1,0 +1,33 @@
+{
+  "text": "Het bestaande plan is al een efficiënte bitmap scan, en met alleen een herschrijving van de SELECT (zonder nieuwe indexen) zie ik geen zinvolle verbetering. De query heeft geen ORDER BY, de predicaten zijn al sargable en de selecteerde kolommen zijn minimaal. Een herschrijving zou het resultaat niet identiek of sneller maken, dus geef ik de originele query ongewijzigd terug.\n\n```sql\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nHet plan gebruikt al een bitmap scan op tenant_id, en de resterende filters zijn goedkoop. Zonder extra index (niet toegestaan) is er geen betrouwbare winst te halen.",
+  "input_tokens": 1788,
+  "output_tokens": 373,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.007306,
+  "usage_raw": {
+    "prompt_tokens": 1788,
+    "completion_tokens": 373,
+    "total_tokens": 2161,
+    "cost": 0.007306,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.007306,
+      "upstream_inference_prompt_cost": 0.003576,
+      "upstream_inference_completions_cost": 0.00373
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 3.4,
+  "sql": "SELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-sonnet-5.5"
+}

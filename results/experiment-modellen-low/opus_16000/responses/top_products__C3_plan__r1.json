@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH l AS MATERIALIZED (\n    SELECT pv.product_id,\n           o.id  AS order_id,\n           pv.id AS variant_id,\n           ol.quantity,\n           ol.line_total_cents\n      FROM order_lines ol\n      JOIN orders o           ON o.id = ol.order_id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nper_order AS (\n    SELECT product_id, order_id,\n           sum(quantity)         AS q,\n           sum(line_total_cents) AS r\n      FROM l\n     GROUP BY product_id, order_id\n),\nper_product AS (\n    SELECT product_id,\n           count(*)       AS order_count,\n           sum(q)::bigint AS quantity,\n           sum(r)         AS revenue_cents\n      FROM per_order\n     GROUP BY product_id\n),\nper_variant AS (\n    SELECT product_id, count(*) AS variant_count\n      FROM (SELECT DISTINCT product_id, variant_id FROM l) d\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       pv.variant_count\n  FROM per_product pp\n  JOIN per_variant pv ON pv.product_id = pp.product_id\n  JOIN products p     ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe dure, naar schijf lopende sort op (p.id, o.id) voor `count(DISTINCT)` wordt vervangen door hash-aggregaties: eerst per (product, order), daarna per product, en apart een telling van de distincte varianten. Producten worden pas na de aggregatie gejoind, op ongeveer 1.750 rijen in plaats van 81.000. De types blijven gelijk aan het origineel: `quantity` wordt teruggecast naar bigint en `revenue_cents` blijft numeric.",
+  "input_tokens": 4239,
+  "output_tokens": 1436,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.045676,
+  "usage_raw": {
+    "prompt_tokens": 4239,
+    "completion_tokens": 1436,
+    "total_tokens": 5675,
+    "cost": 0.045676,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.045676,
+      "upstream_inference_prompt_cost": 0.016956,
+      "upstream_inference_completions_cost": 0.02872
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 622,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 13.9,
+  "sql": "WITH l AS MATERIALIZED (\n    SELECT pv.product_id,\n           o.id  AS order_id,\n           pv.id AS variant_id,\n           ol.quantity,\n           ol.line_total_cents\n      FROM order_lines ol\n      JOIN orders o           ON o.id = ol.order_id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nper_order AS (\n    SELECT product_id, order_id,\n           sum(quantity)         AS q,\n           sum(line_total_cents) AS r\n      FROM l\n     GROUP BY product_id, order_id\n),\nper_product AS (\n    SELECT product_id,\n           count(*)       AS order_count,\n           sum(q)::bigint AS quantity,\n           sum(r)         AS revenue_cents\n      FROM per_order\n     GROUP BY product_id\n),\nper_variant AS (\n    SELECT product_id, count(*) AS variant_count\n      FROM (SELECT DISTINCT product_id, variant_id FROM l) d\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       pv.variant_count\n  FROM per_product pp\n  JOIN per_variant pv ON pv.product_id = pp.product_id\n  JOIN products p     ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

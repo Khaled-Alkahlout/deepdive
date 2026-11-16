@@ -1,0 +1,33 @@
+{
+  "text": "De query is al een eenvoudige selectie op één tabel. De trage factor is het ontbreken van een geschikte index (tenant_id, created_at), en die mag ik niet toevoegen. Een herschrijving van de SQL geeft de planner geen betere toegangsroute: de bestaande indexen worden al gebruikt, en elke herformulering (CTE, UNION, subquery) levert hetzelfde plan of een tragere variant op. Ook ontbreekt een ORDER BY, dus er is geen volgorde om te behouden of te optimaliseren.\n\n```sql\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nIk zie geen zinvolle herschrijving die hetzelfde resultaat geeft en sneller is, dus de originele query is ongewijzigd teruggegeven. De winst zit in een index op (tenant_id, created_at), maar die valt buiten de regels.",
+  "input_tokens": 1788,
+  "output_tokens": 421,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.007786,
+  "usage_raw": {
+    "prompt_tokens": 1788,
+    "completion_tokens": 421,
+    "total_tokens": 2209,
+    "cost": 0.007786,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.007786,
+      "upstream_inference_prompt_cost": 0.003576,
+      "upstream_inference_completions_cost": 0.00421
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 4.2,
+  "sql": "SELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-sonnet-5.5"
+}

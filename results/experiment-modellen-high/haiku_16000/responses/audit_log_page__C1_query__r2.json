@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: audit_log_page\n-- owner: compliance\n-- params: tenant_id, table_name, row_id, from, to, limit, offset\nWITH page AS (\n  SELECT a.id,\n         a.created_at\n    FROM audit_log a\n   WHERE a.tenant_id = %(tenant_id)s\n     AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n     AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n     AND a.created_at >= %(from)s\n     AND a.created_at <  %(to)s\n   ORDER BY a.created_at DESC, a.id DESC\n   LIMIT %(limit)s OFFSET %(offset)s\n)\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM page p\n  JOIN audit_log a ON a.id = p.id\n ORDER BY p.created_at DESC, p.id DESC;\n```\n\nDe filtering, sortering en paginering gebeuren eerst op de smalle kolommen, en de brede `old_data`/`new_data`-kolommen worden alleen opgehaald voor de rijen op de pagina. Dit werkt alleen als `id` uniek is (bijvoorbeeld de primaire sleutel); bij een gepartitioneerde tabel zonder globaal unieke `id` moet de join ook op de partitiesleutel. Een echte versnelling van de OR-filters vraagt om een index op `(tenant_id, created_at, id)` of een aparte query per filtercombinatie, wat buiten de regels van deze herschrijving valt.",
+  "input_tokens": 735,
+  "output_tokens": 1642,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0008945,
+  "usage_raw": {
+    "prompt_tokens": 735,
+    "completion_tokens": 1642,
+    "total_tokens": 2377,
+    "cost": 0.0008945,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0008945,
+      "upstream_inference_prompt_cost": 7.35e-05,
+      "upstream_inference_completions_cost": 0.000821
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1021,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 7.7,
+  "sql": "-- name: audit_log_page\n-- owner: compliance\n-- params: tenant_id, table_name, row_id, from, to, limit, offset\nWITH page AS (\n  SELECT a.id,\n         a.created_at\n    FROM audit_log a\n   WHERE a.tenant_id = %(tenant_id)s\n     AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n     AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n     AND a.created_at >= %(from)s\n     AND a.created_at <  %(to)s\n   ORDER BY a.created_at DESC, a.id DESC\n   LIMIT %(limit)s OFFSET %(offset)s\n)\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM page p\n  JOIN audit_log a ON a.id = p.id\n ORDER BY p.created_at DESC, p.id DESC",
+  "model": "anthropic/claude-haiku-5.5"
+}

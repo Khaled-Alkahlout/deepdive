@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM (\n        SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action,\n               a.old_data, a.new_data, a.actor_id, a.is_system, a.created_at\n          FROM audit_log a\n         WHERE %(table_name)s::text IS NULL\n           AND %(row_id)s::uuid IS NULL\n           AND a.tenant_id = %(tenant_id)s\n           AND a.created_at >= %(from)s\n           AND a.created_at <  %(to)s\n        UNION ALL\n        SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action,\n               a.old_data, a.new_data, a.actor_id, a.is_system, a.created_at\n          FROM audit_log a\n         WHERE %(table_name)s::text IS NOT NULL\n           AND %(row_id)s::uuid IS NULL\n           AND a.tenant_id = %(tenant_id)s\n           AND a.table_name = %(table_name)s\n           AND a.created_at >= %(from)s\n           AND a.created_at <  %(to)s\n        UNION ALL\n        SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action,\n               a.old_data, a.new_data, a.actor_id, a.is_system, a.created_at\n          FROM audit_log a\n         WHERE %(table_name)s::text IS NULL\n           AND %(row_id)s::uuid IS NOT NULL\n           AND a.tenant_id = %(tenant_id)s\n           AND a.row_id = %(row_id)s\n           AND a.created_at >= %(from)s\n           AND a.created_at <  %(to)s\n        UNION ALL\n        SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action,\n               a.old_data, a.new_data, a.actor_id, a.is_system, a.created_at\n          FROM audit_log a\n         WHERE %(table_name)s::text IS NOT NULL\n           AND %(row_id)s::uuid IS NOT NULL\n           AND a.tenant_id = %(tenant_id)s\n           AND a.table_name = %(table_name)s\n           AND a.row_id = %(row_id)s\n           AND a.created_at >= %(from)s\n           AND a.created_at <  %(to)s\n       ) a\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s\n```\n\nHet patroon `(param IS NULL OR kolom = param)` dwingt bij een generiek plan één plan af voor alle combinaties van parameters. Dat speelt bijvoorbeeld bij psycopg3, dat statements na enkele uitvoeringen prepared, en zo'n plan kan de filters op `table_name`/`row_id` niet als indexvoorwaarde gebruiken. Door de vier combinaties als elkaar uitsluitende UNION ALL-takken te schrijven, worden de niet-geldende takken via een one-time filter overgeslagen, en kan de actieve tak een passende geordende indexscan gebruiken (Merge Append + LIMIT), met exact dezelfde rijen en volgorde.",
+  "input_tokens": 735,
+  "output_tokens": 2702,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.05698,
+  "usage_raw": {
+    "prompt_tokens": 735,
+    "completion_tokens": 2702,
+    "total_tokens": 3437,
+    "cost": 0.05698,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.05698,
+      "upstream_inference_prompt_cost": 0.00294,
+      "upstream_inference_completions_cost": 0.05404
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1526,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 25.3,
+  "sql": "SELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM (\n        SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action,\n               a.old_data, a.new_data, a.actor_id, a.is_system, a.created_at\n          FROM audit_log a\n         WHERE %(table_name)s::text IS NULL\n           AND %(row_id)s::uuid IS NULL\n           AND a.tenant_id = %(tenant_id)s\n           AND a.created_at >= %(from)s\n           AND a.created_at <  %(to)s\n        UNION ALL\n        SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action,\n               a.old_data, a.new_data, a.actor_id, a.is_system, a.created_at\n          FROM audit_log a\n         WHERE %(table_name)s::text IS NOT NULL\n           AND %(row_id)s::uuid IS NULL\n           AND a.tenant_id = %(tenant_id)s\n           AND a.table_name = %(table_name)s\n           AND a.created_at >= %(from)s\n           AND a.created_at <  %(to)s\n        UNION ALL\n        SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action,\n               a.old_data, a.new_data, a.actor_id, a.is_system, a.created_at\n          FROM audit_log a\n         WHERE %(table_name)s::text IS NULL\n           AND %(row_id)s::uuid IS NOT NULL\n           AND a.tenant_id = %(tenant_id)s\n           AND a.row_id = %(row_id)s\n           AND a.created_at >= %(from)s\n           AND a.created_at <  %(to)s\n        UNION ALL\n        SELECT a.id, a.tenant_id, a.table_name, a.row_id, a.action,\n               a.old_data, a.new_data, a.actor_id, a.is_system, a.created_at\n          FROM audit_log a\n         WHERE %(table_name)s::text IS NOT NULL\n           AND %(row_id)s::uuid IS NOT NULL\n           AND a.tenant_id = %(tenant_id)s\n           AND a.table_name = %(table_name)s\n           AND a.row_id = %(row_id)s\n           AND a.created_at >= %(from)s\n           AND a.created_at <  %(to)s\n       ) a\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s",
+  "model": "anthropic/claude-opus-5.5"
+}

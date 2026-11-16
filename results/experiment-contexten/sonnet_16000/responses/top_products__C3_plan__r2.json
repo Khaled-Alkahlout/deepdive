@@ -1,0 +1,33 @@
+{
+  "text": "Het knelpunt is de grote sort op (p.id, o.id) voor `count(DISTINCT o.id)` en `count(DISTINCT pv.id)`, die naar schijf spilt (ca. 81k rijen). Ik aggregeer eerst per variant, zodat de DISTINCT-sorts vervallen. Daarna rol ik op naar product. Dit blijft exact gelijk, omdat een order per variant maar één keer geteld hoeft te worden en een order bij verschillende varianten van hetzelfde product wel dubbel zou tellen. Daarom is `count(DISTINCT o.id)` per product niet af te leiden uit per-variant tellingen. Ik houd het dus per product, maar met een kleinere set.\n\nDe veilige aanpak: eerst de order_lines koppelen aan het product, en dan per (product, order) voorgroeperen. Dat geeft per product de som van quantity en revenue, en het aantal orders is het aantal groepen. Het variantaantal bereken ik apart, want variant_count is het aantal verschillende varianten met verkopen in het product.\n\n```sql\nWITH lines AS (\n  SELECT pv.product_id,\n         ol.order_id,\n         pv.id AS variant_id,\n         sum(ol.quantity)         AS quantity,\n         sum(ol.line_total_cents) AS revenue_cents\n    FROM orders o\n    JOIN order_lines ol      ON ol.order_id = o.id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n   GROUP BY pv.product_id, ol.order_id, pv.id\n),\nper_product AS (\n  SELECT product_id,\n         count(DISTINCT order_id) AS order_count,\n         sum(quantity)            AS quantity,\n         sum(revenue_cents)       AS revenue_cents,\n         count(DISTINCT variant_id) AS variant_count\n    FROM lines\n   GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       pp.variant_count\n  FROM per_product pp\n  JOIN products p ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nUitleg: de products-join gebeurt pas na de aggregatie, dus de brede rijen (name, brand, enz.) worden niet meer meegesorteerd. De voorgroepering per (product, order, variant) verkleint de invoer voor de DISTINCT-tellingen. De resultaten blijven gelijk; wel kan de volgorde bij exacte gelijkstand op quantity en revenue anders uitvallen, net als in het origineel, waar die ook niet gedefinieerd is.",
+  "input_tokens": 4239,
+  "output_tokens": 1076,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.019238,
+  "usage_raw": {
+    "prompt_tokens": 4239,
+    "completion_tokens": 1076,
+    "total_tokens": 5315,
+    "cost": 0.019238,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.019238,
+      "upstream_inference_prompt_cost": 0.008478,
+      "upstream_inference_completions_cost": 0.01076
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 8.8,
+  "sql": "WITH lines AS (\n  SELECT pv.product_id,\n         ol.order_id,\n         pv.id AS variant_id,\n         sum(ol.quantity)         AS quantity,\n         sum(ol.line_total_cents) AS revenue_cents\n    FROM orders o\n    JOIN order_lines ol      ON ol.order_id = o.id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n   GROUP BY pv.product_id, ol.order_id, pv.id\n),\nper_product AS (\n  SELECT product_id,\n         count(DISTINCT order_id) AS order_count,\n         sum(quantity)            AS quantity,\n         sum(revenue_cents)       AS revenue_cents,\n         count(DISTINCT variant_id) AS variant_count\n    FROM lines\n   GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       pp.variant_count\n  FROM per_product pp\n  JOIN products p ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

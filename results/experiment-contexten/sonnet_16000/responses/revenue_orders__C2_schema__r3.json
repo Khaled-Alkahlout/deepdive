@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nDe query is al eenvoudig en bevat geen overbodige joins, subqueries of functies op kolommen, waardoor de predicaten sargable zijn. Het bestaande index `orders_created_at_tenant_idx (created_at, tenant_id)` ondersteunt de datumrange al, en zonder schemawijzigingen of een ORDER BY valt er met een herschrijving niets zinvols te winnen. Daarom geef ik de originele query ongewijzigd terug.",
+  "input_tokens": 1297,
+  "output_tokens": 301,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.005604,
+  "usage_raw": {
+    "prompt_tokens": 1297,
+    "completion_tokens": 301,
+    "total_tokens": 1598,
+    "cost": 0.005604,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.005604,
+      "upstream_inference_prompt_cost": 0.002594,
+      "upstream_inference_completions_cost": 0.00301
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 3.2,
+  "sql": "SELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-sonnet-5.5"
+}

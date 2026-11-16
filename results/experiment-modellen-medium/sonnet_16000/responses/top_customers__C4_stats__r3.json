@@ -1,0 +1,33 @@
+{
+  "text": "Het probleem is de nested loop met een herberekende HashAggregate (9799 loops). Ik bereken totalen en laatste order in één aggregatie, en filter vooraf op klanten van de tenant.\n\nLet op de semantiek: het origineel telt orders van een klant over alle tenants (orders.tenant_id wordt niet gefilterd), dus ik filter orders alleen via de join op customers van de tenant. Dat is equivalent, omdat het resultaat toch alleen klanten met `c.tenant_id = %(tenant_id)s` bevat. `max(created_at)` is gelijk aan de DISTINCT ON met `created_at DESC`. De ORDER BY heeft geen tiebreaker, dus ik behoud exact dezelfde ORDER BY.\n\n```sql\nWITH agg AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n      JOIN customers c ON c.id = o.customer_id\n     WHERE c.tenant_id = %(tenant_id)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM agg t\n  JOIN customers c ON c.id = t.customer_id\n WHERE t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s\n```\n\nEén aggregatie over orders vervangt de gematerialiseerde CTE, de sort/DISTINCT ON en de 9799× herhaalde HashAggregate. Het filter op tenant gebeurt vóór het groeperen, waardoor er minder rijen worden verwerkt. Het resultaat blijft identiek; bij gelijke revenue kan de volgorde, net als in het origineel, onbepaald zijn.",
+  "input_tokens": 5078,
+  "output_tokens": 737,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.017526,
+  "usage_raw": {
+    "prompt_tokens": 5078,
+    "completion_tokens": 737,
+    "total_tokens": 5815,
+    "cost": 0.017526,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.017526,
+      "upstream_inference_prompt_cost": 0.010156,
+      "upstream_inference_completions_cost": 0.00737
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 6.0,
+  "sql": "WITH agg AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n      JOIN customers c ON c.id = o.customer_id\n     WHERE c.tenant_id = %(tenant_id)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM agg t\n  JOIN customers c ON c.id = t.customer_id\n WHERE t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

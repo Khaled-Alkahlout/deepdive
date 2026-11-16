@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH totals AS (\n    SELECT o.customer_id,\n           sum(o.total_cents)  AS revenue,\n           count(*)            AS order_count,\n           max(o.created_at)   AS last_order_at\n      FROM orders o\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n       AND o.customer_id IN (SELECT c2.id\n                               FROM customers c2\n                              WHERE c2.tenant_id = %(tenant_id)s)\n     GROUP BY o.customer_id\n    HAVING max(o.created_at) >= %(from)s\n       AND max(o.created_at) <  %(to)s\n       AND count(o.created_at) = count(*)\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN totals t ON t.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s\n```\n\nDe originele query materialiseert eerst alle orders van alle tenants en scant die daarna twee keer (aggregatie plus sorteren voor `DISTINCT ON`). Deze versie leest alleen de orders van klanten van de gevraagde tenant en berekent omzet, aantal en laatste orderdatum in één aggregatie, waarbij de vensterfilter al in de `HAVING` wordt toegepast. De controle `count(o.created_at) = count(*)` bootst het gedrag van `ORDER BY created_at DESC` na, waarin NULL-waarden vooraan sorteren: een klant met een order zonder `created_at` valt daardoor ook hier af.",
+  "input_tokens": 924,
+  "output_tokens": 1481,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.033316,
+  "usage_raw": {
+    "prompt_tokens": 924,
+    "completion_tokens": 1481,
+    "total_tokens": 2405,
+    "cost": 0.033316,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.033316,
+      "upstream_inference_prompt_cost": 0.003696,
+      "upstream_inference_completions_cost": 0.02962
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 866,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 13.7,
+  "sql": "WITH totals AS (\n    SELECT o.customer_id,\n           sum(o.total_cents)  AS revenue,\n           count(*)            AS order_count,\n           max(o.created_at)   AS last_order_at\n      FROM orders o\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n       AND o.customer_id IN (SELECT c2.id\n                               FROM customers c2\n                              WHERE c2.tenant_id = %(tenant_id)s)\n     GROUP BY o.customer_id\n    HAVING max(o.created_at) >= %(from)s\n       AND max(o.created_at) <  %(to)s\n       AND count(o.created_at) = count(*)\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN totals t ON t.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

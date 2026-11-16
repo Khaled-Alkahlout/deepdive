@@ -1,0 +1,33 @@
+{
+  "text": "Het grootste risico zit in de cast `ol.variant_id::uuid`. Die kan een fout geven bij ongeldige waarden, en de volgorde van evaluatie bepaalt of dat gebeurt. Ik laat de semantiek daarom intact. De winst haal ik uit aggregeren op variantniveau vóór de join met products. Dat verkleint de groepering op brede tekstkolommen.\n\nLet op: `count(DISTINCT o.id)` per product kan niet uit variant-aggregaten worden afgeleid, want een order kan meerdere varianten van hetzelfde product bevatten. Die herschrijving is dus niet veilig, en `count(DISTINCT)` blijft op productniveau nodig.\n\nEen veilige verbetering is groeperen op `p.id` alleen. `p.id` is de primaire sleutel, dus de overige kolommen zijn functioneel afhankelijk. Dat geeft een kleinere groeperingssleutel en hetzelfde resultaat. De filtering op orders verandert niet.\n\n```sql\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT o.id)        AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM order_lines ol\n  JOIN orders o           ON o.id = ol.order_id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p         ON p.id = pv.product_id\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY p.id\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nGroeperen op de primaire sleutel `p.id` is toegestaan, omdat de andere productkolommen functioneel afhankelijk zijn. Dat maakt de groeperingssleutel kleiner en de sortering goedkoper, bij identiek resultaat. Verdere herschrijvingen zijn onveilig vanwege `count(DISTINCT)` en de `::uuid`-cast.",
+  "input_tokens": 2398,
+  "output_tokens": 840,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.013196,
+  "usage_raw": {
+    "prompt_tokens": 2398,
+    "completion_tokens": 840,
+    "total_tokens": 3238,
+    "cost": 0.013196,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.013196,
+      "upstream_inference_prompt_cost": 0.004796,
+      "upstream_inference_completions_cost": 0.0084
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 6.6,
+  "sql": "SELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT o.id)        AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM order_lines ol\n  JOIN orders o           ON o.id = ol.order_id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p         ON p.id = pv.product_id\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY p.id\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

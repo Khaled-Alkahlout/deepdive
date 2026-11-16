@@ -1,0 +1,5 @@
+cand_iqr_ms,cand_median_ms,candidate,case,condition,cost_reported,detail,effort,expected,failing_param_sets,faster,fault,flagged_not_equivalent,input_tokens,llm_seconds,max_tokens,model,orig_iqr_ms,orig_median_ms,output_tokens,param_sets,provider,rep,reps,speedup,stop_reason,unchanged,verdict
+,,LLM_C1_query_r1,top_customers,C1_query,0.80924,afgekapt door de tokenlimiet voor een volledig SQL-blok,max,,,,,,924,207.5,16000,anthropic/claude-fable-5.1,,,16000,,openrouter,1,,,max_tokens,False,TRUNCATED
+2.8,42.3,LLM_C2_schema_r1,top_customers,C2_schema,0.46012,,max,unknown,0,True,llm,False,1982,110.1,16000,anthropic/claude-fable-5.1,104.8,9109.4,8806,4,openrouter,1,3,215.4,end_turn,False,ACCEPTED
+1.6,54.9,LLM_C3_plan_r1,top_customers,C3_plan,0.75993,,max,unknown,0,True,llm,False,3478,186.9,16000,anthropic/claude-fable-5.1,68.5,9218.3,14503,4,openrouter,1,3,167.81,end_turn,False,ACCEPTED
+5.0,48.0,LLM_C4_stats_r1,top_customers,C4_stats,0.44483,,max,unknown,0,True,llm,False,5078,96.7,16000,anthropic/claude-fable-5.1,326.8,9536.7,7881,4,openrouter,1,3,198.72,end_turn,False,ACCEPTED

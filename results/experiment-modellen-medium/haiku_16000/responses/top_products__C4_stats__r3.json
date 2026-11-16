@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH filtered_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nline_items AS (\n    SELECT pv.product_id,\n           fo.id              AS order_id,\n           pv.id              AS variant_id,\n           ol.quantity,\n           ol.line_total_cents\n      FROM filtered_orders fo\n      JOIN order_lines ol      ON ol.order_id = fo.id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n),\nper_product AS (\n    SELECT product_id,\n           count(DISTINCT order_id)   AS order_count,\n           sum(quantity)              AS quantity,\n           sum(line_total_cents)      AS revenue_cents,\n           count(DISTINCT variant_id) AS variant_count\n      FROM line_items\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       pp.variant_count\n  FROM per_product pp\n  JOIN products p ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC, p.id\n LIMIT %(limit)s\n```\n\nDe orderfilter wordt eerst toegepast zodat de join kleiner begint, en de aggregatie gebeurt op `product_id` alleen (de overige productkolommen zijn functioneel afhankelijk van de primary key). Het extra tiebreaker-kenmerk `p.id` maakt de volgorde bij gelijke `quantity` en `revenue_cents` deterministisch, wat het origineel niet was. De grootste kostenpost, de `count(DISTINCT ...)`-sorteerstap, blijft grotendeels bestaan, dus de winst is naar verwachting bescheiden.",
+  "input_tokens": 7365,
+  "output_tokens": 3436,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0024545,
+  "usage_raw": {
+    "prompt_tokens": 7365,
+    "completion_tokens": 3436,
+    "total_tokens": 10801,
+    "cost": 0.0024545,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0024545,
+      "upstream_inference_prompt_cost": 0.0007365,
+      "upstream_inference_completions_cost": 0.001718
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2697,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 16.2,
+  "sql": "WITH filtered_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nline_items AS (\n    SELECT pv.product_id,\n           fo.id              AS order_id,\n           pv.id              AS variant_id,\n           ol.quantity,\n           ol.line_total_cents\n      FROM filtered_orders fo\n      JOIN order_lines ol      ON ol.order_id = fo.id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n),\nper_product AS (\n    SELECT product_id,\n           count(DISTINCT order_id)   AS order_count,\n           sum(quantity)              AS quantity,\n           sum(line_total_cents)      AS revenue_cents,\n           count(DISTINCT variant_id) AS variant_count\n      FROM line_items\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       pp.variant_count\n  FROM per_product pp\n  JOIN products p ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC, p.id\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: top_customers\n-- owner: sales\n-- params: tenant_id, from, to, limit\n-- Customers ranked by revenue, with their most recent order. Only customers\n-- whose last order falls inside the window are listed; this is what the\n-- account managers asked for (\"who was active this quarter\").\nWITH order_agg AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       a.revenue,\n       a.order_count,\n       a.last_order_at\n  FROM customers c\n  JOIN order_agg a ON a.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND a.last_order_at >= %(from)s\n   AND a.last_order_at <  %(to)s\n ORDER BY a.revenue DESC\n LIMIT %(limit)s\n```\n\nDe originele query koppelde de geaggregeerde CTE's via een nested loop die de hele totalen-aggregatie per rij herhaalde (ruim 48 miljoen verworpen join-rijen). Door de orders in één keer per klant te groeperen met `max(created_at)` als laatste bestelling, en pas daarna met `customers` te joinen, verdwijnt die kwadratische lus. Het resultaat blijft gelijk, al is de volgorde van gelijke omzetwaarden bij `LIMIT` ook in het origineel niet gegarandeerd.",
+  "input_tokens": 5078,
+  "output_tokens": 2792,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0019038,
+  "usage_raw": {
+    "prompt_tokens": 5078,
+    "completion_tokens": 2792,
+    "total_tokens": 7870,
+    "cost": 0.0019038,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0019038,
+      "upstream_inference_prompt_cost": 0.0005078,
+      "upstream_inference_completions_cost": 0.001396
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2189,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 13.4,
+  "sql": "-- name: top_customers\n-- owner: sales\n-- params: tenant_id, from, to, limit\n-- Customers ranked by revenue, with their most recent order. Only customers\n-- whose last order falls inside the window are listed; this is what the\n-- account managers asked for (\"who was active this quarter\").\nWITH order_agg AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       a.revenue,\n       a.order_count,\n       a.last_order_at\n  FROM customers c\n  JOIN order_agg a ON a.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND a.last_order_at >= %(from)s\n   AND a.last_order_at <  %(to)s\n ORDER BY a.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

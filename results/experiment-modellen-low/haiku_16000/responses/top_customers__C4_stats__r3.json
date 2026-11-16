@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH customer_totals AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customer_totals t\n  JOIN customers c ON c.id = t.customer_id\n WHERE c.tenant_id = %(tenant_id)s\n   AND t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s\n```\n\nDe originele query joinde twee CTE's op `customer_id` via een nested loop zonder index, waardoor er ruim 48 miljoen join-filtervergelijkingen plaatsvonden. Deze versie berekent omzet, aantal orders en laatste ordermoment in één aggregatie per klant (`max(created_at)` is gelijkwaardig aan de `DISTINCT ON`-variant) en joint daarna één keer met `customers`. De kolommen, filters en ORDER BY blijven gelijk; alleen de volgorde van gelijke omzetten kan verschillen, wat in het origineel ook niet gegarandeerd was.",
+  "input_tokens": 5078,
+  "output_tokens": 1653,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0013343,
+  "usage_raw": {
+    "prompt_tokens": 5078,
+    "completion_tokens": 1653,
+    "total_tokens": 6731,
+    "cost": 0.0013343,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0013343,
+      "upstream_inference_prompt_cost": 0.0005078,
+      "upstream_inference_completions_cost": 0.0008265
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1122,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 7.7,
+  "sql": "WITH customer_totals AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customer_totals t\n  JOIN customers c ON c.id = t.customer_id\n WHERE c.tenant_id = %(tenant_id)s\n   AND t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

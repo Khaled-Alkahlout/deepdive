@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH lvl1 AS (\n    SELECT pv.product_id,\n           o.id  AS order_id,\n           pv.id AS variant_id,\n           sum(ol.quantity)         AS q,\n           sum(ol.line_total_cents) AS r\n      FROM order_lines ol\n      JOIN orders o            ON o.id = ol.order_id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY pv.product_id, o.id, pv.id\n),\ntot AS (\n    SELECT product_id, sum(q)::bigint AS quantity, sum(r) AS revenue_cents\n      FROM lvl1 GROUP BY product_id\n),\npo AS (\n    SELECT product_id, count(*) AS order_count\n      FROM (SELECT product_id, order_id FROM lvl1 GROUP BY 1, 2) s\n     GROUP BY product_id\n),\npvc AS (\n    SELECT product_id, count(*) AS variant_count\n      FROM (SELECT product_id, variant_id FROM lvl1 GROUP BY 1, 2) s\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       po.order_count,\n       t.quantity,\n       t.revenue_cents,\n       pvc.variant_count\n  FROM tot t\n  JOIN po  ON po.product_id  = t.product_id\n  JOIN pvc ON pvc.product_id = t.product_id\n  JOIN products p ON p.id = t.product_id\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe dure externe sort op (p.id, o.id) voor de `count(DISTINCT ...)` vervalt. In plaats daarvan wordt eerst per (product, order, variant) geaggregeerd met hash-aggregaties, en worden de distinct-tellingen afgeleid uit deze veel kleinere tussenset. Met de cast naar bigint blijven de resultaattypen gelijk aan het origineel, en de producten worden pas na de aggregatie gejoind.",
+  "input_tokens": 4239,
+  "output_tokens": 1584,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.048636,
+  "usage_raw": {
+    "prompt_tokens": 4239,
+    "completion_tokens": 1584,
+    "total_tokens": 5823,
+    "cost": 0.048636,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.048636,
+      "upstream_inference_prompt_cost": 0.016956,
+      "upstream_inference_completions_cost": 0.03168
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 754,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 16.6,
+  "sql": "WITH lvl1 AS (\n    SELECT pv.product_id,\n           o.id  AS order_id,\n           pv.id AS variant_id,\n           sum(ol.quantity)         AS q,\n           sum(ol.line_total_cents) AS r\n      FROM order_lines ol\n      JOIN orders o            ON o.id = ol.order_id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY pv.product_id, o.id, pv.id\n),\ntot AS (\n    SELECT product_id, sum(q)::bigint AS quantity, sum(r) AS revenue_cents\n      FROM lvl1 GROUP BY product_id\n),\npo AS (\n    SELECT product_id, count(*) AS order_count\n      FROM (SELECT product_id, order_id FROM lvl1 GROUP BY 1, 2) s\n     GROUP BY product_id\n),\npvc AS (\n    SELECT product_id, count(*) AS variant_count\n      FROM (SELECT product_id, variant_id FROM lvl1 GROUP BY 1, 2) s\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       po.order_count,\n       t.quantity,\n       t.revenue_cents,\n       pvc.variant_count\n  FROM tot t\n  JOIN po  ON po.product_id  = t.product_id\n  JOIN pvc ON pvc.product_id = t.product_id\n  JOIN products p ON p.id = t.product_id\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH filtered AS MATERIALIZED (\n  SELECT pv.product_id,\n         pv.id AS variant_id,\n         ol.order_id,\n         ol.quantity,\n         ol.line_total_cents\n    FROM orders o\n    JOIN order_lines ol      ON ol.order_id = o.id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nper_order AS (\n  SELECT product_id,\n         order_id,\n         sum(quantity)          AS quantity,\n         sum(line_total_cents)  AS revenue_cents\n    FROM filtered\n   GROUP BY product_id, order_id\n),\nper_product AS (\n  SELECT product_id,\n         count(*)                       AS order_count,\n         sum(quantity)::bigint          AS quantity,\n         sum(revenue_cents)             AS revenue_cents\n    FROM per_order\n   GROUP BY product_id\n),\nvariants AS (\n  SELECT product_id,\n         count(*) AS variant_count\n    FROM (SELECT DISTINCT product_id, variant_id FROM filtered) d\n   GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       v.variant_count\n  FROM per_product pp\n  JOIN variants v   ON v.product_id = pp.product_id\n  JOIN products p   ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe aggregatie gebeurt eerst per (product, order), waardoor `count(DISTINCT o.id)` vervangen wordt door een `count(*)` en de dure sort op (product, order) verdwijnt. Het aantal distinct varianten wordt apart berekend uit een kleine set, en `sum(quantity)` is met `::bigint` gecast zodat het type gelijk blijft aan het origineel. Let op: bij gelijke waarden voor quantity en revenue blijft de volgorde niet-deterministisch, net als in het origineel; de winst is niet gemeten en moet met EXPLAIN ANALYZE gecontroleerd worden.",
+  "input_tokens": 7365,
+  "output_tokens": 5652,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0035625,
+  "usage_raw": {
+    "prompt_tokens": 7365,
+    "completion_tokens": 5652,
+    "total_tokens": 13017,
+    "cost": 0.0035625,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0035625,
+      "upstream_inference_prompt_cost": 0.0007365,
+      "upstream_inference_completions_cost": 0.002826
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 4774,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 24.7,
+  "sql": "WITH filtered AS MATERIALIZED (\n  SELECT pv.product_id,\n         pv.id AS variant_id,\n         ol.order_id,\n         ol.quantity,\n         ol.line_total_cents\n    FROM orders o\n    JOIN order_lines ol      ON ol.order_id = o.id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nper_order AS (\n  SELECT product_id,\n         order_id,\n         sum(quantity)          AS quantity,\n         sum(line_total_cents)  AS revenue_cents\n    FROM filtered\n   GROUP BY product_id, order_id\n),\nper_product AS (\n  SELECT product_id,\n         count(*)                       AS order_count,\n         sum(quantity)::bigint          AS quantity,\n         sum(revenue_cents)             AS revenue_cents\n    FROM per_order\n   GROUP BY product_id\n),\nvariants AS (\n  SELECT product_id,\n         count(*) AS variant_count\n    FROM (SELECT DISTINCT product_id, variant_id FROM filtered) d\n   GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       v.variant_count\n  FROM per_product pp\n  JOIN variants v   ON v.product_id = pp.product_id\n  JOIN products p   ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

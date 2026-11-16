@@ -1,0 +1,7 @@
+pgserver
+psycopg[binary]
+sqlglot
+anthropic
+streamlit
+pandas
+matplotlib

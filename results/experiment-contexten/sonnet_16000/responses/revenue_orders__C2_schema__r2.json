@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nIk zie geen zinvolle herschrijving die hetzelfde resultaat garandeert: de query is al een eenvoudige selectie zonder joins, subqueries of ORDER BY. De bestaande index `(created_at, tenant_id)` dekt het tijdsbereik al, en zonder schemawijzigingen valt er via herformulering niets te winnen. Daarom geef ik de originele query ongewijzigd terug.",
+  "input_tokens": 1297,
+  "output_tokens": 286,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.005454,
+  "usage_raw": {
+    "prompt_tokens": 1297,
+    "completion_tokens": 286,
+    "total_tokens": 1583,
+    "cost": 0.005454,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.005454,
+      "upstream_inference_prompt_cost": 0.002594,
+      "upstream_inference_completions_cost": 0.00286
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 2.8,
+  "sql": "SELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-sonnet-5.5"
+}

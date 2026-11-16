@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       a.revenue,\n       a.order_count,\n       a.last_order_at\n  FROM customers c\n  JOIN LATERAL (\n        SELECT sum(o.total_cents) AS revenue,\n               count(*)           AS order_count,\n               max(o.created_at)  AS last_order_at\n          FROM orders o\n         WHERE o.customer_id = c.id\n           AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n        HAVING count(*) > 0\n       ) a ON true\n WHERE c.tenant_id = %(tenant_id)s\n   AND a.last_order_at >= %(from)s\n   AND a.last_order_at <  %(to)s\n ORDER BY a.revenue DESC\n LIMIT %(limit)s\n```\n\nDe herschreven query groepeert niet langer alle orders van alle tenants in een gematerialiseerde CTE, en sorteert ze ook niet voor DISTINCT ON. Er wordt alleen per klant van de gevraagde tenant geaggregeerd. Omdat `created_at` NOT NULL is, levert `max(created_at)` precies dezelfde waarde als de DISTINCT ON op `created_at DESC`. De HAVING zorgt dat klanten zonder kwalificerende orders wegvallen, net als bij de inner joins van het origineel.",
+  "input_tokens": 1982,
+  "output_tokens": 813,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.024188,
+  "usage_raw": {
+    "prompt_tokens": 1982,
+    "completion_tokens": 813,
+    "total_tokens": 2795,
+    "cost": 0.024188,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.024188,
+      "upstream_inference_prompt_cost": 0.007928,
+      "upstream_inference_completions_cost": 0.01626
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 322,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 8.6,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       a.revenue,\n       a.order_count,\n       a.last_order_at\n  FROM customers c\n  JOIN LATERAL (\n        SELECT sum(o.total_cents) AS revenue,\n               count(*)           AS order_count,\n               max(o.created_at)  AS last_order_at\n          FROM orders o\n         WHERE o.customer_id = c.id\n           AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n        HAVING count(*) > 0\n       ) a ON true\n WHERE c.tenant_id = %(tenant_id)s\n   AND a.last_order_at >= %(from)s\n   AND a.last_order_at <  %(to)s\n ORDER BY a.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

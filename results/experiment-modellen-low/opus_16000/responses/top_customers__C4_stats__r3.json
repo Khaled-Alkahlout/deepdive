@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN (\n        SELECT o.customer_id,\n               sum(o.total_cents) AS revenue,\n               count(*)           AS order_count,\n               max(o.created_at)  AS last_order_at\n          FROM orders o\n          JOIN customers ci ON ci.id = o.customer_id\n                           AND ci.tenant_id = %(tenant_id)s\n         WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n         GROUP BY o.customer_id\n        HAVING max(o.created_at) >= %(from)s\n           AND max(o.created_at) <  %(to)s\n       ) t ON t.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s\n```\n\nDe gematerialiseerde CTE werd twee keer gescand. De join met de aggregaat liep zonder hash-join als nested loop over ongeveer 48 miljoen rijen. Nu berekent één enkele GROUP BY tegelijk de som, het aantal en `max(created_at)`, wat precies de waarde is die `DISTINCT ON … ORDER BY created_at DESC` opleverde; vooraf wordt alleen op klanten van de tenant gefilterd en het venster wordt in de HAVING toegepast.",
+  "input_tokens": 5078,
+  "output_tokens": 858,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.037472,
+  "usage_raw": {
+    "prompt_tokens": 5078,
+    "completion_tokens": 858,
+    "total_tokens": 5936,
+    "cost": 0.037472,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.037472,
+      "upstream_inference_prompt_cost": 0.020312,
+      "upstream_inference_completions_cost": 0.01716
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 329,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 9.3,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN (\n        SELECT o.customer_id,\n               sum(o.total_cents) AS revenue,\n               count(*)           AS order_count,\n               max(o.created_at)  AS last_order_at\n          FROM orders o\n          JOIN customers ci ON ci.id = o.customer_id\n                           AND ci.tenant_id = %(tenant_id)s\n         WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n         GROUP BY o.customer_id\n        HAVING max(o.created_at) >= %(from)s\n           AND max(o.created_at) <  %(to)s\n       ) t ON t.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

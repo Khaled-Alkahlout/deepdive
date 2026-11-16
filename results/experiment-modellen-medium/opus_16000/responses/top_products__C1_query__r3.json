@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH filtered_orders AS MATERIALIZED (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nlines AS MATERIALIZED (\n    SELECT ol.order_id,\n           ol.variant_id::uuid AS variant_uuid,\n           ol.quantity,\n           ol.line_total_cents\n      FROM filtered_orders fo\n      JOIN order_lines ol ON ol.order_id = fo.id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT l.order_id)  AS order_count,\n       sum(l.quantity)             AS quantity,\n       sum(l.line_total_cents)     AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM lines l\n  JOIN product_variants pv ON pv.id = l.variant_uuid\n  JOIN products p          ON p.id = pv.product_id\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nEerst worden de orders van de tenant in het datumvenster en met de juiste status geselecteerd. Daarna worden alleen hun regels via `order_id` opgehaald, zodat de `::uuid`-cast en de catalogusjoin alleen op dat kleine deel van `order_lines` draaien. De cast, de joinsemantiek, de aggregaten (en dus de kolomtypen) en de ORDER BY zijn ongewijzigd, waardoor het resultaat identiek blijft; de winst hangt wel af van een index op `order_lines(order_id)` en op `orders(tenant_id, created_at)`.",
+  "input_tokens": 824,
+  "output_tokens": 1988,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.043056,
+  "usage_raw": {
+    "prompt_tokens": 824,
+    "completion_tokens": 1988,
+    "total_tokens": 2812,
+    "cost": 0.043056,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.043056,
+      "upstream_inference_prompt_cost": 0.003296,
+      "upstream_inference_completions_cost": 0.03976
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1287,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 20.7,
+  "sql": "WITH filtered_orders AS MATERIALIZED (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nlines AS MATERIALIZED (\n    SELECT ol.order_id,\n           ol.variant_id::uuid AS variant_uuid,\n           ol.quantity,\n           ol.line_total_cents\n      FROM filtered_orders fo\n      JOIN order_lines ol ON ol.order_id = fo.id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT l.order_id)  AS order_count,\n       sum(l.quantity)             AS quantity,\n       sum(l.line_total_cents)     AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM lines l\n  JOIN product_variants pv ON pv.id = l.variant_uuid\n  JOIN products p          ON p.id = pv.product_id\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

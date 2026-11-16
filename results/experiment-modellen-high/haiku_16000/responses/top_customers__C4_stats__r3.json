@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: top_customers\n-- owner: sales\n-- params: tenant_id, from, to, limit\nWITH order_stats AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n       AND o.customer_id IN (\n           SELECT c.id\n             FROM customers c\n            WHERE c.tenant_id = %(tenant_id)s\n       )\n     GROUP BY o.customer_id\n    HAVING max(o.created_at) >= %(from)s\n       AND max(o.created_at) <  %(to)s\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       os.revenue,\n       os.order_count,\n       os.last_order_at\n  FROM order_stats os\n  JOIN customers c ON c.id = os.customer_id\n WHERE c.tenant_id = %(tenant_id)s\n ORDER BY os.revenue DESC\n LIMIT %(limit)s\n```\n\nHet origineel aggregeerde alle klanten van alle tenants en filterde pas daarna, wat het dure nested loop met herhaald hashaggregaat veroorzaakte. Nu wordt eerst op de tenant gefilterd en de laatste-ordervoorwaarde als HAVING toegepast, wat dezelfde klanten en waarden oplevert omdat `max(created_at)` gelijk is aan de DISTINCT ON-uitkomst. De tenantfilter loopt via `customers.tenant_id` en niet via `orders.tenant_id`, zodat de semantiek gelijk blijft aan het origineel; de ORDER BY is ongewijzigd.",
+  "input_tokens": 5078,
+  "output_tokens": 3806,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0024108,
+  "usage_raw": {
+    "prompt_tokens": 5078,
+    "completion_tokens": 3806,
+    "total_tokens": 8884,
+    "cost": 0.0024108,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0024108,
+      "upstream_inference_prompt_cost": 0.0005078,
+      "upstream_inference_completions_cost": 0.001903
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 3170,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 16.8,
+  "sql": "-- name: top_customers\n-- owner: sales\n-- params: tenant_id, from, to, limit\nWITH order_stats AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n       AND o.customer_id IN (\n           SELECT c.id\n             FROM customers c\n            WHERE c.tenant_id = %(tenant_id)s\n       )\n     GROUP BY o.customer_id\n    HAVING max(o.created_at) >= %(from)s\n       AND max(o.created_at) <  %(to)s\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       os.revenue,\n       os.order_count,\n       os.last_order_at\n  FROM order_stats os\n  JOIN customers c ON c.id = os.customer_id\n WHERE c.tenant_id = %(tenant_id)s\n ORDER BY os.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

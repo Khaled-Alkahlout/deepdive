@@ -1,0 +1,27 @@
+{
+  "provider": "openrouter",
+  "models": {
+    "haiku": "anthropic/claude-haiku-5.5",
+    "sonnet": "anthropic/claude-sonnet-5.5",
+    "opus": "anthropic/claude-opus-5.5"
+  },
+  "limits": [
+    16000
+  ],
+  "effort": "medium",
+  "conditions": [
+    "C1_query",
+    "C2_schema",
+    "C3_plan",
+    "C4_stats"
+  ],
+  "cases": [
+    "top_products",
+    "top_customers",
+    "audit_log_page",
+    "revenue_orders"
+  ],
+  "reps": 3,
+  "val_reps": 7,
+  "created": "2026-11-12T00:33:34"
+}

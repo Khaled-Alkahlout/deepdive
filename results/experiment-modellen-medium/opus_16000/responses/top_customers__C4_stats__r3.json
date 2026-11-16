@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents)  AS revenue,\n       count(*)            AS order_count,\n       max(o.created_at)   AS last_order_at\n  FROM customers c\n  JOIN orders o\n    ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s\n```\n\nHet origineel was traag door een nested loop die de HashAggregate 9799 keer doorliep, met 48 miljoen weggefilterde join-rijen als gevolg. Deze versie haalt de orders in één hash join op en filtert daarbij direct op de klanten van de tenant. Daarna worden omzet, aantal orders en `max(created_at)` in één aggregatie berekend; die laatste is gelijk aan de `DISTINCT ON … created_at DESC`, omdat `created_at` NOT NULL is.",
+  "input_tokens": 5078,
+  "output_tokens": 973,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.039772,
+  "usage_raw": {
+    "prompt_tokens": 5078,
+    "completion_tokens": 973,
+    "total_tokens": 6051,
+    "cost": 0.039772,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.039772,
+      "upstream_inference_prompt_cost": 0.020312,
+      "upstream_inference_completions_cost": 0.01946
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 547,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 11.0,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents)  AS revenue,\n       count(*)            AS order_count,\n       max(o.created_at)   AS last_order_at\n  FROM customers c\n  JOIN orders o\n    ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: top_customers\n-- owner: sales\n-- params: tenant_id, from, to, limit\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s\n```\n\nDe gematerialiseerde CTE verborg de statistieken (schatting 1 resp. 200 rijen), waardoor de planner een nested loop zonder index koos die de HashAggregate 9.799 keer herscande (48 miljoen join-vergelijkingen). De herschrijving berekent omzet, aantal en laatste besteldatum in één aggregatie — `max(created_at)` is identiek aan `DISTINCT ON (customer_id) ... ORDER BY created_at DESC` omdat `created_at` NOT NULL is — na een hash-join met de op tenant gefilterde klanten, zodat alleen relevante orders gegroepeerd worden en `GROUP BY c.id` (primary key) de overige klantkolommen functioneel dekt. Resultaat: één seq scan per tabel, één hash join en één HashAggregate in plaats van 12 seconden nested-loop werk.",
+  "input_tokens": 5078,
+  "output_tokens": 7881,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.44483,
+  "usage_raw": {
+    "prompt_tokens": 5078,
+    "completion_tokens": 7881,
+    "total_tokens": 12959,
+    "cost": 0.44483,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.44483,
+      "upstream_inference_prompt_cost": 0.05078,
+      "upstream_inference_completions_cost": 0.39405
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 7296,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 96.7,
+  "sql": "-- name: top_customers\n-- owner: sales\n-- params: tenant_id, from, to, limit\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-fable-5.1"
+}

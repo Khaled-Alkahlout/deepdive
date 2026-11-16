@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH page AS (\n  SELECT a.id, a.created_at\n    FROM audit_log a\n   WHERE a.tenant_id = %(tenant_id)s\n     AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n     AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n     AND a.created_at >= %(from)s\n     AND a.created_at <  %(to)s\n   ORDER BY a.created_at DESC, a.id DESC\n   LIMIT %(limit)s OFFSET %(offset)s\n)\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM page p\n  JOIN audit_log a ON a.id = p.id\n ORDER BY p.created_at DESC, p.id DESC\n```\n\nDeze \"deferred join\" sorteert en pagineert eerst alleen op de smalle kolommen `id` en `created_at`, zodat de brede `jsonb`-kolommen pas worden opgehaald voor de rijen op de pagina. De volgorde blijft identiek doordat `id` uniek is. Het voordeel is vooral merkbaar bij grote `jsonb`-waarden en grote OFFSETs; bij kleine rijen kan het neutraal zijn.",
+  "input_tokens": 1285,
+  "output_tokens": 2859,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.001558,
+  "usage_raw": {
+    "prompt_tokens": 1285,
+    "completion_tokens": 2859,
+    "total_tokens": 4144,
+    "cost": 0.001558,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.001558,
+      "upstream_inference_prompt_cost": 0.0001285,
+      "upstream_inference_completions_cost": 0.0014295
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2350,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 14.2,
+  "sql": "WITH page AS (\n  SELECT a.id, a.created_at\n    FROM audit_log a\n   WHERE a.tenant_id = %(tenant_id)s\n     AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n     AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n     AND a.created_at >= %(from)s\n     AND a.created_at <  %(to)s\n   ORDER BY a.created_at DESC, a.id DESC\n   LIMIT %(limit)s OFFSET %(offset)s\n)\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM page p\n  JOIN audit_log a ON a.id = p.id\n ORDER BY p.created_at DESC, p.id DESC",
+  "model": "anthropic/claude-haiku-5.5"
+}

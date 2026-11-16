@@ -1,0 +1,33 @@
+{
+  "text": "Het grootste deel van de tijd gaat naar het sorteren van 81k rijen op (p.id, o.id) voor `count(DISTINCT o.id)`, met een externe merge naar schijf. Ik aggregeer daarom eerst per variant (zonder DISTINCT-sort op de join-uitvoer) en rol daarna op naar product.\n\nHet resultaat blijft exact gelijk. `count(DISTINCT o.id)` per product kan niet uit per-variant tellingen worden opgeteld, omdat één order meerdere varianten van hetzelfde product kan bevatten. Daarom gebruik ik een tussenstap met unieke (product, order)-paren. De sommen (quantity, revenue) kunnen wel per variant worden voorgeaggregeerd.\n\n```sql\nWITH f AS (\n  SELECT pv.product_id,\n         pv.id AS variant_id,\n         o.id  AS order_id,\n         sum(ol.quantity)         AS q,\n         sum(ol.line_total_cents) AS r\n    FROM orders o\n    JOIN order_lines ol      ON ol.order_id = o.id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n   GROUP BY pv.product_id, pv.id, o.id\n), agg AS (\n  SELECT product_id,\n         count(DISTINCT order_id)   AS order_count,\n         sum(q)                     AS quantity,\n         sum(r)                     AS revenue_cents,\n         count(DISTINCT variant_id) AS variant_count\n    FROM f\n   GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nLet op: `sum` over `sum` levert hetzelfde type op als het origineel (bigint → numeric), dus de uitvoer blijft gelijk. Het voordeel is dat de sortering/hashing plaatsvindt op minder brede rijen en dat `products` pas na de aggregatie wordt gejoind. De winst is bescheiden en ik heb de query niet kunnen uitvoeren.",
+  "input_tokens": 7365,
+  "output_tokens": 914,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.02387,
+  "usage_raw": {
+    "prompt_tokens": 7365,
+    "completion_tokens": 914,
+    "total_tokens": 8279,
+    "cost": 0.02387,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.02387,
+      "upstream_inference_prompt_cost": 0.01473,
+      "upstream_inference_completions_cost": 0.00914
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 7.2,
+  "sql": "WITH f AS (\n  SELECT pv.product_id,\n         pv.id AS variant_id,\n         o.id  AS order_id,\n         sum(ol.quantity)         AS q,\n         sum(ol.line_total_cents) AS r\n    FROM orders o\n    JOIN order_lines ol      ON ol.order_id = o.id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n   GROUP BY pv.product_id, pv.id, o.id\n), agg AS (\n  SELECT product_id,\n         count(DISTINCT order_id)   AS order_count,\n         sum(q)                     AS quantity,\n         sum(r)                     AS revenue_cents,\n         count(DISTINCT variant_id) AS variant_count\n    FROM f\n   GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH ord AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nagg AS (\n    SELECT pv.product_id,\n           count(DISTINCT ol.order_id) AS order_count,\n           sum(ol.quantity)            AS quantity,\n           sum(ol.line_total_cents)    AS revenue_cents,\n           count(DISTINCT pv.id)       AS variant_count\n      FROM ord\n      JOIN order_lines ol     ON ol.order_id = ord.id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     GROUP BY pv.product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe aggregatie gebeurt nu alleen op `product_id` (de productkolommen zijn functioneel afhankelijk van de primaire sleutel `p.id`), en de join met `products` gebeurt pas op de ~1750 geaggregeerde rijen in plaats van op alle orderregels. Dit vermijdt de grote sort op `(p.id, o.id)` met externe merge naar schijf. Het resultaat blijft gelijk omdat `order_count`, `variant_count`, `quantity` en `revenue_cents` op dezelfde manier worden berekend.",
+  "input_tokens": 7365,
+  "output_tokens": 2681,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.002077,
+  "usage_raw": {
+    "prompt_tokens": 7365,
+    "completion_tokens": 2681,
+    "total_tokens": 10046,
+    "cost": 0.002077,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.002077,
+      "upstream_inference_prompt_cost": 0.0007365,
+      "upstream_inference_completions_cost": 0.0013405
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2039,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 12.5,
+  "sql": "WITH ord AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nagg AS (\n    SELECT pv.product_id,\n           count(DISTINCT ol.order_id) AS order_count,\n           sum(ol.quantity)            AS quantity,\n           sum(ol.line_total_cents)    AS revenue_cents,\n           count(DISTINCT pv.id)       AS variant_count\n      FROM ord\n      JOIN order_lines ol     ON ol.order_id = ord.id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     GROUP BY pv.product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

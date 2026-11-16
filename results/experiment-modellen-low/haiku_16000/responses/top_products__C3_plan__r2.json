@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: top_products\n-- owner: merchandising\n-- params: tenant_id, from, to, limit\n-- Best sellers by units and revenue. Line items reference the variant by its\n-- string id (integration feed), so it is cast when joining the catalog.\nWITH paid_orders AS (\n  SELECT o.id\n    FROM orders o\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nlines AS (\n  SELECT pv.product_id, ol.order_id, pv.id AS variant_id,\n         ol.quantity, ol.line_total_cents\n    FROM order_lines ol\n    JOIN paid_orders po      ON po.id = ol.order_id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n),\nper_order AS (\n  SELECT product_id, order_id,\n         sum(quantity)         AS qty,\n         sum(line_total_cents) AS rev\n    FROM lines\n   GROUP BY product_id, order_id\n),\nper_product AS (\n  SELECT product_id,\n         count(*)  AS order_count,\n         sum(qty)  AS quantity,\n         sum(rev)  AS revenue_cents\n    FROM per_order\n   GROUP BY product_id\n),\nvariant_counts AS (\n  SELECT product_id, count(*) AS variant_count\n    FROM (SELECT DISTINCT product_id, variant_id FROM lines) dv\n   GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       vc.variant_count\n  FROM per_product pp\n  JOIN variant_counts vc ON vc.product_id = pp.product_id\n  JOIN products p        ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe orderfilter wordt eerst als aparte CTE uitgevoerd, zodat de dure joins alleen op relevante lines draaien. Distincte tellingen worden vervangen door twee-traps groepering (per order, daarna per product), en de zware productjoin met brede GROUP BY-sleutels verschuift naar na de aggregatie. Het resultaat blijft gelijk: `p.id` is primaire sleutel, dus de extra kolommen zijn functioneel afhankelijk en leveren dezelfde groepen op.",
+  "input_tokens": 4239,
+  "output_tokens": 3329,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0020884,
+  "usage_raw": {
+    "prompt_tokens": 4239,
+    "completion_tokens": 3329,
+    "total_tokens": 7568,
+    "cost": 0.0020884,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0020884,
+      "upstream_inference_prompt_cost": 0.0004239,
+      "upstream_inference_completions_cost": 0.0016645
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2406,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 17.9,
+  "sql": "-- name: top_products\n-- owner: merchandising\n-- params: tenant_id, from, to, limit\n-- Best sellers by units and revenue. Line items reference the variant by its\n-- string id (integration feed), so it is cast when joining the catalog.\nWITH paid_orders AS (\n  SELECT o.id\n    FROM orders o\n   WHERE o.tenant_id = %(tenant_id)s\n     AND o.created_at >= %(from)s\n     AND o.created_at <  %(to)s\n     AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nlines AS (\n  SELECT pv.product_id, ol.order_id, pv.id AS variant_id,\n         ol.quantity, ol.line_total_cents\n    FROM order_lines ol\n    JOIN paid_orders po      ON po.id = ol.order_id\n    JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n),\nper_order AS (\n  SELECT product_id, order_id,\n         sum(quantity)         AS qty,\n         sum(line_total_cents) AS rev\n    FROM lines\n   GROUP BY product_id, order_id\n),\nper_product AS (\n  SELECT product_id,\n         count(*)  AS order_count,\n         sum(qty)  AS quantity,\n         sum(rev)  AS revenue_cents\n    FROM per_order\n   GROUP BY product_id\n),\nvariant_counts AS (\n  SELECT product_id, count(*) AS variant_count\n    FROM (SELECT DISTINCT product_id, variant_id FROM lines) dv\n   GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       vc.variant_count\n  FROM per_product pp\n  JOIN variant_counts vc ON vc.product_id = pp.product_id\n  JOIN products p        ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

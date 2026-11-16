@@ -1,0 +1,33 @@
+{
+  "text": "Het probleem is dat de planner de CTE-schattingen te laag inschat (rows=1) en daardoor een nested loop kiest met een HashAggregate die 9799 keer wordt herhaald. Ik bereken totalen en laatste order in één aggregatie, filter vooraf op tenant via een join met customers, en laat de MATERIALIZED-CTE weg.\n\nLet op de semantiek: `last_order_at` is de max(created_at) per klant (DISTINCT ON met created_at DESC), dus `max()` is gelijkwaardig. Het type blijft `timestamp without time zone`. De volgorde bij gelijke revenue was in het origineel niet gedefinieerd, dus dat blijft ongewijzigd.\n\n```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN LATERAL (\n        SELECT sum(o.total_cents) AS revenue,\n               count(*)           AS order_count,\n               max(o.created_at)  AS last_order_at\n          FROM orders o\n         WHERE o.customer_id = c.id\n           AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n       ) t ON t.order_count > 0\n WHERE c.tenant_id = %(tenant_id)s\n   AND t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s\n```\n\nEr is geen index op orders(customer_id), dus de LATERAL-variant kan een seq scan per klant veroorzaken, wat slechter kan uitpakken. Veiliger is de variant met één aggregatie:\n\n```sql\nWITH totals AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN totals t ON t.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s\n```\n\nDit is mijn definitieve antwoord (de tweede query):\n\n```sql\nWITH totals AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN totals t ON t.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s\n```\n\nEén enkele scan en aggregatie van orders vervangt de dubbele CTE-scan, sort en de geneste loop met 48 miljoen weggefilterde rijen. De join met customers gebeurt daarna via een hash join in plaats van een herhaalde aggregatie.",
+  "input_tokens": 3478,
+  "output_tokens": 1345,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.020406,
+  "usage_raw": {
+    "prompt_tokens": 3478,
+    "completion_tokens": 1345,
+    "total_tokens": 4823,
+    "cost": 0.020406,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.020406,
+      "upstream_inference_prompt_cost": 0.006956,
+      "upstream_inference_completions_cost": 0.01345
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 9.0,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN LATERAL (\n        SELECT sum(o.total_cents) AS revenue,\n               count(*)           AS order_count,\n               max(o.created_at)  AS last_order_at\n          FROM orders o\n         WHERE o.customer_id = c.id\n           AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n       ) t ON t.order_count > 0\n WHERE c.tenant_id = %(tenant_id)s\n   AND t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

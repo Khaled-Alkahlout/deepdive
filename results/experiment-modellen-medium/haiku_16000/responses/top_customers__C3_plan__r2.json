@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH agg AS (\n    SELECT c.id,\n           c.email,\n           c.company,\n           c.country_code,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM customers c\n      JOIN orders o\n        ON o.customer_id = c.id\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     WHERE c.tenant_id = %(tenant_id)s\n     GROUP BY c.id, c.email, c.company, c.country_code\n    HAVING max(o.created_at) >= %(from)s\n       AND max(o.created_at) <  %(to)s\n)\nSELECT id,\n       email,\n       company,\n       country_code,\n       revenue,\n       order_count,\n       last_order_at\n  FROM agg\n ORDER BY revenue DESC\n LIMIT %(limit)s\n```\n\nDe origineel koppelde de totalen en de laatste order via een nested loop zonder bruikbare join-conditie, waardoor er ruim 48 miljoen rijen werden weggefilterd. Deze versie aggregeert in één pass per klant en past de datumfilter toe in HAVING, wat hetzelfde resultaat geeft. `max(created_at)` is gelijkwaardig aan de DISTINCT ON-selectie, en de ORDER BY blijft gelijk aan het origineel. Een index op `orders(customer_id)` zou verder helpen, maar schemawijzigingen vallen buiten de opdracht.",
+  "input_tokens": 3478,
+  "output_tokens": 2513,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0016043,
+  "usage_raw": {
+    "prompt_tokens": 3478,
+    "completion_tokens": 2513,
+    "total_tokens": 5991,
+    "cost": 0.0016043,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0016043,
+      "upstream_inference_prompt_cost": 0.0003478,
+      "upstream_inference_completions_cost": 0.0012565
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1978,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 11.0,
+  "sql": "WITH agg AS (\n    SELECT c.id,\n           c.email,\n           c.company,\n           c.country_code,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM customers c\n      JOIN orders o\n        ON o.customer_id = c.id\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     WHERE c.tenant_id = %(tenant_id)s\n     GROUP BY c.id, c.email, c.company, c.country_code\n    HAVING max(o.created_at) >= %(from)s\n       AND max(o.created_at) <  %(to)s\n)\nSELECT id,\n       email,\n       company,\n       country_code,\n       revenue,\n       order_count,\n       last_order_at\n  FROM agg\n ORDER BY revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

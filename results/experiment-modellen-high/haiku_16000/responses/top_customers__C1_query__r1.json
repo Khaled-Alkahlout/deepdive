@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: top_customers\n-- owner: sales\n-- params: tenant_id, from, to, limit\nWITH last_order AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n      JOIN customers c\n        ON c.id = o.customer_id\n       AND c.tenant_id = %(tenant_id)s\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n    HAVING NOT bool_or(o.created_at IS NULL)\n       AND max(o.created_at) >= %(from)s\n       AND max(o.created_at) <  %(to)s\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       lo.revenue,\n       lo.order_count,\n       lo.last_order_at\n  FROM last_order lo\n  JOIN customers c\n    ON c.id = lo.customer_id\n ORDER BY lo.revenue DESC\n LIMIT %(limit)s\n```\n\nDe tenantfilter wordt al bij het aggregeren toegepast, zodat er alleen orders van de tenant worden gelezen, en revenue, aantal en laatste bestelling worden in één groepering berekend in plaats van via twee CTE's en een DISTINCT ON-sortering. Het tijdvenster wordt in HAVING gefilterd, waardoor er maar voor de relevante klanten een join met `customers` nodig is. De `bool_or`-controle behoudt de NULL-semantiek van het origineel, waarbij DISTINCT ON met DESC een NULL-`created_at` als laatste bestelling zou kiezen.",
+  "input_tokens": 924,
+  "output_tokens": 3358,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0017714,
+  "usage_raw": {
+    "prompt_tokens": 924,
+    "completion_tokens": 3358,
+    "total_tokens": 4282,
+    "cost": 0.0017714,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0017714,
+      "upstream_inference_prompt_cost": 9.24e-05,
+      "upstream_inference_completions_cost": 0.001679
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2741,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 14.3,
+  "sql": "-- name: top_customers\n-- owner: sales\n-- params: tenant_id, from, to, limit\nWITH last_order AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n      JOIN customers c\n        ON c.id = o.customer_id\n       AND c.tenant_id = %(tenant_id)s\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n    HAVING NOT bool_or(o.created_at IS NULL)\n       AND max(o.created_at) >= %(from)s\n       AND max(o.created_at) <  %(to)s\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       lo.revenue,\n       lo.order_count,\n       lo.last_order_at\n  FROM last_order lo\n  JOIN customers c\n    ON c.id = lo.customer_id\n ORDER BY lo.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

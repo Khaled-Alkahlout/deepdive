@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH tenant_customers AS (\n    SELECT c.id\n      FROM customers c\n     WHERE c.tenant_id = %(tenant_id)s\n),\ncustomer_stats AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n      JOIN tenant_customers tc ON tc.id = o.customer_id\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       cs.revenue,\n       cs.order_count,\n       cs.last_order_at\n  FROM customer_stats cs\n  JOIN customers c ON c.id = cs.customer_id\n WHERE cs.last_order_at >= %(from)s\n   AND cs.last_order_at <  %(to)s\n ORDER BY cs.revenue DESC\n LIMIT %(limit)s\n```\n\nDe tenantfilter wordt naar beneden gehaald naar de orders, zodat er niet meer alle orders van alle tenants worden gescand, en de DISTINCT ON-sortering is vervangen door een `max(created_at)` in dezelfde aggregatie. Het resultaat blijft gelijk, al is de volgorde van rijen met gelijke omzet, net als in het origineel, niet gedefinieerd.",
+  "input_tokens": 1982,
+  "output_tokens": 2036,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0012162,
+  "usage_raw": {
+    "prompt_tokens": 1982,
+    "completion_tokens": 2036,
+    "total_tokens": 4018,
+    "cost": 0.0012162,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0012162,
+      "upstream_inference_prompt_cost": 0.0001982,
+      "upstream_inference_completions_cost": 0.001018
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1515,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 9.1,
+  "sql": "WITH tenant_customers AS (\n    SELECT c.id\n      FROM customers c\n     WHERE c.tenant_id = %(tenant_id)s\n),\ncustomer_stats AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n      JOIN tenant_customers tc ON tc.id = o.customer_id\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       cs.revenue,\n       cs.order_count,\n       cs.last_order_at\n  FROM customer_stats cs\n  JOIN customers c ON c.id = cs.customer_id\n WHERE cs.last_order_at >= %(from)s\n   AND cs.last_order_at <  %(to)s\n ORDER BY cs.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

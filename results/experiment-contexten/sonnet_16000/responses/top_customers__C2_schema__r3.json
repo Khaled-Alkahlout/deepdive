@@ -1,0 +1,33 @@
+{
+  "text": "Het origineel materialiseert alle orders met een geldige status van alle tenants en aggregeert die, terwijl maar één tenant nodig is. Daarom beperk ik eerst de klanten tot de tenant en join ik daarna naar orders. Zo hoeft er maar één keer over de orders te worden gelopen: sum, count en max(created_at) in één aggregatie.\n\nLet op: `orders.created_at` is `timestamp without time zone` en `%(from)s` en `%(to)s` worden in het origineel ook met dat type vergeleken. In de herschreven versie blijft de vergelijking op dezelfde `max(created_at)`-waarde, dus de semantiek blijft gelijk. `DISTINCT ON ... created_at DESC` geeft de maximale `created_at`, dus `max()` is equivalent. De volgorde bij gelijke revenue is in het origineel niet gedefinieerd, dus die blijft ook zo.\n\n```sql\nWITH agg AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n      JOIN customers c2 ON c2.id = o.customer_id\n     WHERE c2.tenant_id = %(tenant_id)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN agg t ON t.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s\n```\n\nAlle orders van andere tenants worden nu niet meer gelezen en aggregeren gebeurt in één pass in plaats van twee (geen MATERIALIZED CTE, geen sort voor DISTINCT ON). De uitvoer is identiek: dezelfde kolommen, rijen en ORDER BY.",
+  "input_tokens": 1982,
+  "output_tokens": 782,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.011784,
+  "usage_raw": {
+    "prompt_tokens": 1982,
+    "completion_tokens": 782,
+    "total_tokens": 2764,
+    "cost": 0.011784,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.011784,
+      "upstream_inference_prompt_cost": 0.003964,
+      "upstream_inference_completions_cost": 0.00782
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 6.5,
+  "sql": "WITH agg AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n      JOIN customers c2 ON c2.id = o.customer_id\n     WHERE c2.tenant_id = %(tenant_id)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN agg t ON t.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

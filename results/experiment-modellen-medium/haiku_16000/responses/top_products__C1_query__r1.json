@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: top_products\n-- owner: merchandising\n-- params: tenant_id, from, to, limit\n-- Best sellers by units and revenue. Line items reference the variant by its\n-- string id (integration feed), so it is cast when joining the catalog.\nWITH selected_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT so.id)       AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM selected_orders so\n  JOIN order_lines ol      ON ol.order_id = so.id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p          ON p.id = pv.product_id\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe orderfilter staat nu in een aparte CTE, zodat de selectie van orders vóór de join met de regels plaatsvindt en de `orders`-tabel niet meer als volledige join hoeft mee te lopen. Het resultaat is gelijk aan het origineel: dezelfde kolommen, aggregaties en ORDER BY. De winst is waarschijnlijk beperkt, omdat de planner deze herschrijving vaak zelf al maakt.",
+  "input_tokens": 824,
+  "output_tokens": 1860,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0010124,
+  "usage_raw": {
+    "prompt_tokens": 824,
+    "completion_tokens": 1860,
+    "total_tokens": 2684,
+    "cost": 0.0010124,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0010124,
+      "upstream_inference_prompt_cost": 8.24e-05,
+      "upstream_inference_completions_cost": 0.00093
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1217,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 8.5,
+  "sql": "-- name: top_products\n-- owner: merchandising\n-- params: tenant_id, from, to, limit\n-- Best sellers by units and revenue. Line items reference the variant by its\n-- string id (integration feed), so it is cast when joining the catalog.\nWITH selected_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT so.id)       AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM selected_orders so\n  JOIN order_lines ol      ON ol.order_id = so.id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p          ON p.id = pv.product_id\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

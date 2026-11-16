@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: top_products\n-- owner: merchandising\n-- params: tenant_id, from, to, limit\n-- Best sellers by units and revenue. Line items reference the variant by its\n-- string id (integration feed), so it is cast when joining the catalog.\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT o.id)        AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM order_lines ol\n  JOIN orders o           ON o.id = ol.order_id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p         ON p.id = pv.product_id\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nIk zie geen herschrijving die zonder indexen echt sneller is en gegarandeerd hetzelfde resultaat geeft, dus de query is ongewijzigd. Het eigenlijke knelpunt is de ontbrekende index op `order_lines(order_id)`, en dat valt buiten wat een herschrijving mag oplossen. De join omdraaien naar `pv.id::text = ol.variant_id` zou de semantiek veranderen: hoofdlettergebruik in uuid-strings en het foutgedrag bij ongeldige waarden zouden anders uitpakken.",
+  "input_tokens": 2398,
+  "output_tokens": 1208,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.033752,
+  "usage_raw": {
+    "prompt_tokens": 2398,
+    "completion_tokens": 1208,
+    "total_tokens": 3606,
+    "cost": 0.033752,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.033752,
+      "upstream_inference_prompt_cost": 0.009592,
+      "upstream_inference_completions_cost": 0.02416
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 555,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 12.5,
+  "sql": "-- name: top_products\n-- owner: merchandising\n-- params: tenant_id, from, to, limit\n-- Best sellers by units and revenue. Line items reference the variant by its\n-- string id (integration feed), so it is cast when joining the catalog.\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT o.id)        AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM order_lines ol\n  JOIN orders o           ON o.id = ol.order_id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p         ON p.id = pv.product_id\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

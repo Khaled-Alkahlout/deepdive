@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o\n    ON o.customer_id = c.id\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n WHERE c.tenant_id = %(tenant_id)s\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s\n```\n\nDe query scant `orders` nu één keer, zonder MATERIALIZED-CTE en zonder sortering voor DISTINCT ON. Alleen orders van klanten van de opgegeven tenant worden meegenomen, via de join met `customers`. `max(created_at)` is gelijk aan de eerste rij van `DISTINCT ON … created_at DESC`, en de filter op de laatste order staat in `HAVING`. Het resultaat is daardoor identiek.",
+  "input_tokens": 1982,
+  "output_tokens": 1157,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.015534,
+  "usage_raw": {
+    "prompt_tokens": 1982,
+    "completion_tokens": 1157,
+    "total_tokens": 3139,
+    "cost": 0.015534,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.015534,
+      "upstream_inference_prompt_cost": 0.003964,
+      "upstream_inference_completions_cost": 0.01157
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 750,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 8.9,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o\n    ON o.customer_id = c.id\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n WHERE c.tenant_id = %(tenant_id)s\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

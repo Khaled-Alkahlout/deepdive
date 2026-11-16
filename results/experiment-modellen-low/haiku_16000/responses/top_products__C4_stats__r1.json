@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH lines AS (\n    SELECT pv.product_id,\n           ol.order_id,\n           pv.id          AS variant_id,\n           ol.quantity,\n           ol.line_total_cents\n      FROM order_lines ol\n      JOIN orders o           ON o.id = ol.order_id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nprod_totals AS (\n    SELECT product_id,\n           sum(quantity)         AS quantity,\n           sum(line_total_cents) AS revenue_cents\n      FROM lines\n     GROUP BY product_id\n),\nprod_orders AS (\n    SELECT product_id, count(*) AS order_count\n      FROM (SELECT DISTINCT product_id, order_id FROM lines) d\n     GROUP BY product_id\n),\nprod_variants AS (\n    SELECT product_id, count(*) AS variant_count\n      FROM (SELECT DISTINCT product_id, variant_id FROM lines) d\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       po.order_count,\n       pt.quantity,\n       pt.revenue_cents,\n       pvc.variant_count\n  FROM prod_totals pt\n  JOIN prod_orders po    ON po.product_id  = pt.product_id\n  JOIN prod_variants pvc ON pvc.product_id = pt.product_id\n  JOIN products p        ON p.id = pt.product_id\n ORDER BY pt.quantity DESC, pt.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nUitleg: de `count(DISTINCT ...)`-aggregaten worden vervangen door twee kleinere `DISTINCT`-subquery's op (product, order) en (product, variant), zodat de sorteringen op de volledige regelset (~81k rijen) wegvallen en alleen de kleine productgroepen worden gesorteerd. Het verschil in snelheid is waarschijnlijk bescheiden, omdat de distincts nog steeds sorteren, maar de resultaten en volgorde blijven gelijk aan het origineel.",
+  "input_tokens": 7365,
+  "output_tokens": 2964,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0022185,
+  "usage_raw": {
+    "prompt_tokens": 7365,
+    "completion_tokens": 2964,
+    "total_tokens": 10329,
+    "cost": 0.0022185,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0022185,
+      "upstream_inference_prompt_cost": 0.0007365,
+      "upstream_inference_completions_cost": 0.001482
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2127,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 13.4,
+  "sql": "WITH lines AS (\n    SELECT pv.product_id,\n           ol.order_id,\n           pv.id          AS variant_id,\n           ol.quantity,\n           ol.line_total_cents\n      FROM order_lines ol\n      JOIN orders o           ON o.id = ol.order_id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\nprod_totals AS (\n    SELECT product_id,\n           sum(quantity)         AS quantity,\n           sum(line_total_cents) AS revenue_cents\n      FROM lines\n     GROUP BY product_id\n),\nprod_orders AS (\n    SELECT product_id, count(*) AS order_count\n      FROM (SELECT DISTINCT product_id, order_id FROM lines) d\n     GROUP BY product_id\n),\nprod_variants AS (\n    SELECT product_id, count(*) AS variant_count\n      FROM (SELECT DISTINCT product_id, variant_id FROM lines) d\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       po.order_count,\n       pt.quantity,\n       pt.revenue_cents,\n       pvc.variant_count\n  FROM prod_totals pt\n  JOIN prod_orders po    ON po.product_id  = pt.product_id\n  JOIN prod_variants pvc ON pvc.product_id = pt.product_id\n  JOIN products p        ON p.id = pt.product_id\n ORDER BY pt.quantity DESC, pt.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

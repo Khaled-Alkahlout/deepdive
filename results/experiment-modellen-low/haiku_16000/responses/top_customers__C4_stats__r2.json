@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH tenant_customers AS (\n    SELECT c.id,\n           c.email,\n           c.company,\n           c.country_code\n      FROM customers c\n     WHERE c.tenant_id = %(tenant_id)s\n),\nagg AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n      JOIN tenant_customers tc ON tc.id = o.customer_id\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT tc.id,\n       tc.email,\n       tc.company,\n       tc.country_code,\n       a.revenue,\n       a.order_count,\n       a.last_order_at\n  FROM agg a\n  JOIN tenant_customers tc ON tc.id = a.customer_id\n WHERE a.last_order_at >= %(from)s\n   AND a.last_order_at <  %(to)s\n ORDER BY a.revenue DESC\n LIMIT %(limit)s\n```\n\nHet origineel joint de laatste-order-CTE met de totalen-CTE via een nested loop die de hele totalen-set per rij opnieuw scant (ruim 48 miljoen verwijderde join-rijen). In deze versie wordt alles in één keer geaggregeerd per klant, na beperking tot de klanten van de tenant. `max(created_at)` geeft dezelfde waarde als `DISTINCT ON ... ORDER BY created_at DESC`, dus het resultaat blijft gelijk. Bij gelijke omzet is de volgorde ongedefinieerd in het origineel en hier evenzeer; de ORDER BY-sleutel is ongewijzigd.",
+  "input_tokens": 5078,
+  "output_tokens": 1811,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0014133,
+  "usage_raw": {
+    "prompt_tokens": 5078,
+    "completion_tokens": 1811,
+    "total_tokens": 6889,
+    "cost": 0.0014133,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0014133,
+      "upstream_inference_prompt_cost": 0.0005078,
+      "upstream_inference_completions_cost": 0.0009055
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1183,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 7.8,
+  "sql": "WITH tenant_customers AS (\n    SELECT c.id,\n           c.email,\n           c.company,\n           c.country_code\n      FROM customers c\n     WHERE c.tenant_id = %(tenant_id)s\n),\nagg AS (\n    SELECT o.customer_id,\n           sum(o.total_cents) AS revenue,\n           count(*)           AS order_count,\n           max(o.created_at)  AS last_order_at\n      FROM orders o\n      JOIN tenant_customers tc ON tc.id = o.customer_id\n     WHERE o.status IN ('paid', 'processing', 'shipped', 'delivered')\n     GROUP BY o.customer_id\n)\nSELECT tc.id,\n       tc.email,\n       tc.company,\n       tc.country_code,\n       a.revenue,\n       a.order_count,\n       a.last_order_at\n  FROM agg a\n  JOIN tenant_customers tc ON tc.id = a.customer_id\n WHERE a.last_order_at >= %(from)s\n   AND a.last_order_at <  %(to)s\n ORDER BY a.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

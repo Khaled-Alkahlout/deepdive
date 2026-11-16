@@ -1,0 +1,33 @@
+{
+  "text": "Het knelpunt is de grote sort (extern, op disk) op p.id, o.id voor de `count(DISTINCT ...)`. Die kan ik vermijden door eerst per variant te aggregeren (order_count, quantity, revenue per variant), en daarna per product.\n\nLet op: `count(DISTINCT o.id)` per product is niet te herleiden uit per-variant tellingen (een order kan meerdere varianten van hetzelfde product bevatten). Daarom aggregeer ik eerst per (product, order) en dan per product. Dat geeft exact dezelfde order_count. `variant_count` is `count(DISTINCT pv.id)`, wat ik per (product, order) niet kan optellen. Ik houd daarom de DISTINCT voor variant_count, maar die is goedkoper omdat de sort kleiner blijft.\n\nDe winst is beperkt en het risico op afwijkingen is reëel, dus ik geef de originele query ongewijzigd terug.\n\n```sql\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT o.id)        AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM order_lines ol\n  JOIN orders o           ON o.id = ol.order_id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p         ON p.id = pv.product_id\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nIk zie geen herschrijving die gegarandeerd identiek blijft en merkbaar sneller is, omdat de twee DISTINCT-aggregaten per product de sort afdwingen. Zonder indexen of work_mem-aanpassingen is er weinig te winnen.",
+  "input_tokens": 4239,
+  "output_tokens": 794,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.016418,
+  "usage_raw": {
+    "prompt_tokens": 4239,
+    "completion_tokens": 794,
+    "total_tokens": 5033,
+    "cost": 0.016418,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.016418,
+      "upstream_inference_prompt_cost": 0.008478,
+      "upstream_inference_completions_cost": 0.00794
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 6.3,
+  "sql": "SELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT o.id)        AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM order_lines ol\n  JOIN orders o           ON o.id = ol.order_id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p         ON p.id = pv.product_id\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

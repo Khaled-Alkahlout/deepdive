@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY sum(o.total_cents) DESC\n LIMIT %(limit)s\n```\n\nDe omzet, het aantal orders en de laatste orderdatum worden nu in één aggregatie per klant berekend. Dat vervangt de gematerialiseerde CTE die twee keer werd gescand, en de nested loop van ruim 48 miljoen join-vergelijkingen verdwijnt. Omdat `created_at` NOT NULL is, levert `max(created_at)` precies dezelfde waarde als de `DISTINCT ON … ORDER BY created_at DESC`, en de tenantfilter op `customers` beperkt de orders al vóór de aggregatie, zonder de totalen per klant te veranderen.",
+  "input_tokens": 5078,
+  "output_tokens": 1097,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.042252,
+  "usage_raw": {
+    "prompt_tokens": 5078,
+    "completion_tokens": 1097,
+    "total_tokens": 6175,
+    "cost": 0.042252,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.042252,
+      "upstream_inference_prompt_cost": 0.020312,
+      "upstream_inference_completions_cost": 0.02194
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 632,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 10.6,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       sum(o.total_cents) AS revenue,\n       count(*)           AS order_count,\n       max(o.created_at)  AS last_order_at\n  FROM customers c\n  JOIN orders o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY c.id\nHAVING max(o.created_at) >= %(from)s\n   AND max(o.created_at) <  %(to)s\n ORDER BY sum(o.total_cents) DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-opus-5.5"
+}

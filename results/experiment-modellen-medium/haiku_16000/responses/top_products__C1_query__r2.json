@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH filtered_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT fo.id)       AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM filtered_orders fo\n  JOIN order_lines ol      ON ol.order_id = fo.id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p          ON p.id = pv.product_id\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe orderfilter wordt expliciet vooraf uitgevoerd, zodat de join met order_lines alleen op de relevante orders plaatsvindt en de planner dat niet hoeft af te leiden. De aggregaten, de join-condities (inclusief de `::uuid`-cast) en de ORDER BY zijn ongewijzigd, dus het resultaat blijft gelijk. Het effect hangt sterk af van de bestaande indexen en selectiviteit; de echte winst haal je meestal pas met een index op `ol.variant_id` of een expressie-index, maar die vallen buiten deze opdracht.",
+  "input_tokens": 824,
+  "output_tokens": 1636,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0009004,
+  "usage_raw": {
+    "prompt_tokens": 824,
+    "completion_tokens": 1636,
+    "total_tokens": 2460,
+    "cost": 0.0009004,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0009004,
+      "upstream_inference_prompt_cost": 8.24e-05,
+      "upstream_inference_completions_cost": 0.000818
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1019,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 7.8,
+  "sql": "WITH filtered_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT fo.id)       AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM filtered_orders fo\n  JOIN order_lines ol      ON ol.order_id = fo.id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p          ON p.id = pv.product_id\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

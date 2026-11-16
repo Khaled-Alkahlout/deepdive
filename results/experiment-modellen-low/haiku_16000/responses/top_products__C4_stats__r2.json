@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH filtered_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\norder_variant_lines AS (\n    SELECT fo.id       AS order_id,\n           pv.id       AS variant_id,\n           pv.product_id,\n           ol.quantity,\n           ol.line_total_cents\n      FROM filtered_orders fo\n      JOIN order_lines ol      ON ol.order_id = fo.id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n),\nproduct_agg AS (\n    SELECT product_id,\n           count(DISTINCT order_id)     AS order_count,\n           sum(quantity)                AS quantity,\n           sum(line_total_cents)        AS revenue_cents,\n           count(DISTINCT variant_id)   AS variant_count\n      FROM order_variant_lines\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM product_agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s\n```\n\nDe aggregatie gebeurt nu op `product_id` (uuid) en de productgegevens worden pas na de aggregatie opgehaald, zodat de brede rijen niet door de hele join en sortering hoeven. Omdat `products.id` de primary key is en elke variant een geldig product heeft via FK, verandert de inner join met `products` het aantal rijen niet. De kolommen, de volgorde en de ORDER BY blijven identiek aan het origineel.",
+  "input_tokens": 7365,
+  "output_tokens": 2363,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.001918,
+  "usage_raw": {
+    "prompt_tokens": 7365,
+    "completion_tokens": 2363,
+    "total_tokens": 9728,
+    "cost": 0.001918,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.001918,
+      "upstream_inference_prompt_cost": 0.0007365,
+      "upstream_inference_completions_cost": 0.0011815
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1673,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 11.7,
+  "sql": "WITH filtered_orders AS (\n    SELECT o.id\n      FROM orders o\n     WHERE o.tenant_id = %(tenant_id)s\n       AND o.created_at >= %(from)s\n       AND o.created_at <  %(to)s\n       AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n),\norder_variant_lines AS (\n    SELECT fo.id       AS order_id,\n           pv.id       AS variant_id,\n           pv.product_id,\n           ol.quantity,\n           ol.line_total_cents\n      FROM filtered_orders fo\n      JOIN order_lines ol      ON ol.order_id = fo.id\n      JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n),\nproduct_agg AS (\n    SELECT product_id,\n           count(DISTINCT order_id)     AS order_count,\n           sum(quantity)                AS quantity,\n           sum(line_total_cents)        AS revenue_cents,\n           count(DISTINCT variant_id)   AS variant_count\n      FROM order_variant_lines\n     GROUP BY product_id\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       a.order_count,\n       a.quantity,\n       a.revenue_cents,\n       a.variant_count\n  FROM product_agg a\n  JOIN products p ON p.id = a.product_id\n ORDER BY a.quantity DESC, a.revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: revenue_orders\n-- owner: finance\n-- params: tenant_id, from, to\n-- Revenue-bearing orders in a window. Period grouping (day/week/month, week\n-- start, fiscal month boundaries) is applied by the service layer so the same\n-- query feeds every grouping the dashboard offers.\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n```\n\nIk zie geen zinvolle herschrijving en geef de query daarom ongewijzigd terug. Het is al een eenvoudige filter op één tabel, en de planner leest via een bitmap scan op `tenant_id` alleen de circa 655 relevante heap-blokken in ongeveer 10 ms, waarbij bijna alle gelezen rijen ook in het resultaat komen. Echte winst vraagt een schemawijziging, bijvoorbeeld een index op `(tenant_id, created_at)`, en die valt buiten de regels.",
+  "input_tokens": 1788,
+  "output_tokens": 496,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.017072,
+  "usage_raw": {
+    "prompt_tokens": 1788,
+    "completion_tokens": 496,
+    "total_tokens": 2284,
+    "cost": 0.017072,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.017072,
+      "upstream_inference_prompt_cost": 0.007152,
+      "upstream_inference_completions_cost": 0.00992
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 61,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 5.7,
+  "sql": "-- name: revenue_orders\n-- owner: finance\n-- params: tenant_id, from, to\n-- Revenue-bearing orders in a window. Period grouping (day/week/month, week\n-- start, fiscal month boundaries) is applied by the service layer so the same\n-- query feeds every grouping the dashboard offers.\nSELECT o.id,\n       o.created_at,\n       o.status,\n       o.total_cents,\n       o.currency\n  FROM orders o\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')",
+  "model": "anthropic/claude-opus-5.5"
+}

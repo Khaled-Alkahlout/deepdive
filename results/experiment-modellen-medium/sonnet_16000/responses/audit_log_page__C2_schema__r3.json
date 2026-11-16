@@ -1,0 +1,33 @@
+{
+  "text": "Het grootste probleem is de \"optionele filter\"-constructie `(param IS NULL OR kolom = param)`. Daardoor kan de planner geen vaste index kiezen, want bij een generic plan weet hij niet of het filter actief is. Ik heb de query daarom niet veranderd, om drie redenen:\n\n- Een herschrijving met UNION ALL of dynamische varianten levert met alleen een SELECT-statement geen betrouwbare winst op, en de resultaten moeten identiek blijven, ook voor NULL-waarden en de volgorde.\n- De index `(tenant_id, created_at)` dekt al het belangrijkste pad: tenant-filter, datumbereik en een backward scan voor `created_at DESC`. De extra filters worden daarna als filter toegepast.\n- Een CASE- of COALESCE-variant is niet equivalent. `row_id` is nullable en `a.row_id = NULL` gedraagt zich anders dan het overslaan van het filter.\n\nDit is dus de originele query, ongewijzigd:\n\n```sql\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s\n```\n\nEen echte verbetering vraagt een index `(tenant_id, created_at DESC, id DESC)`, maar dat valt buiten de regels. Een grote OFFSET blijft duur, en keyset-paginering zou de parametersignatuur veranderen.",
+  "input_tokens": 1285,
+  "output_tokens": 716,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.00973,
+  "usage_raw": {
+    "prompt_tokens": 1285,
+    "completion_tokens": 716,
+    "total_tokens": 2001,
+    "cost": 0.00973,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.00973,
+      "upstream_inference_prompt_cost": 0.00257,
+      "upstream_inference_completions_cost": 0.00716
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 6.0,
+  "sql": "SELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

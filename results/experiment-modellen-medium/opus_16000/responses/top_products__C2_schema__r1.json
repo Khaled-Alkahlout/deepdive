@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nWITH ol_agg AS (\n    SELECT ol.order_id,\n           ol.variant_id,\n           sum(ol.quantity)         AS qty,\n           sum(ol.line_total_cents) AS rev\n      FROM order_lines ol\n     WHERE ol.order_id IN (\n             SELECT o.id\n               FROM orders o\n              WHERE o.tenant_id = %(tenant_id)s\n                AND o.created_at >= %(from)s\n                AND o.created_at <  %(to)s\n                AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n           )\n     GROUP BY ol.order_id, ol.variant_id\n),\nper_product AS (\n    SELECT pv.product_id,\n           count(DISTINCT a.order_id) AS order_count,\n           sum(a.qty)::bigint         AS quantity,\n           sum(a.rev)                 AS revenue_cents,\n           count(DISTINCT pv.id)      AS variant_count\n      FROM ol_agg a\n      JOIN product_variants pv ON pv.id = a.variant_id::uuid\n     GROUP BY pv.product_id\n     ORDER BY quantity DESC, revenue_cents DESC\n     LIMIT %(limit)s\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       pp.variant_count\n  FROM per_product pp\n  JOIN products p ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC\n```\n\nDe orderregels worden eerst per (order, variant) voorgeaggregeerd. Daardoor zijn er veel minder lookups in `product_variants` nodig en blijven `count(DISTINCT ...)` en de sommen exact gelijk; `quantity` wordt teruggecast naar `bigint` zodat het type overeenkomt. De brede `products`-rijen (met onder andere `thumbnail` en `description`) worden pas na de LIMIT opgehaald. Dat kan veilig, omdat `pv.product_id` een NOT NULL foreign key is en de join dus 1-op-1 is.",
+  "input_tokens": 2398,
+  "output_tokens": 1871,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.047012,
+  "usage_raw": {
+    "prompt_tokens": 2398,
+    "completion_tokens": 1871,
+    "total_tokens": 4269,
+    "cost": 0.047012,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.047012,
+      "upstream_inference_prompt_cost": 0.009592,
+      "upstream_inference_completions_cost": 0.03742
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1095,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 18.9,
+  "sql": "WITH ol_agg AS (\n    SELECT ol.order_id,\n           ol.variant_id,\n           sum(ol.quantity)         AS qty,\n           sum(ol.line_total_cents) AS rev\n      FROM order_lines ol\n     WHERE ol.order_id IN (\n             SELECT o.id\n               FROM orders o\n              WHERE o.tenant_id = %(tenant_id)s\n                AND o.created_at >= %(from)s\n                AND o.created_at <  %(to)s\n                AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n           )\n     GROUP BY ol.order_id, ol.variant_id\n),\nper_product AS (\n    SELECT pv.product_id,\n           count(DISTINCT a.order_id) AS order_count,\n           sum(a.qty)::bigint         AS quantity,\n           sum(a.rev)                 AS revenue_cents,\n           count(DISTINCT pv.id)      AS variant_count\n      FROM ol_agg a\n      JOIN product_variants pv ON pv.id = a.variant_id::uuid\n     GROUP BY pv.product_id\n     ORDER BY quantity DESC, revenue_cents DESC\n     LIMIT %(limit)s\n)\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       pp.order_count,\n       pp.quantity,\n       pp.revenue_cents,\n       pp.variant_count\n  FROM per_product pp\n  JOIN products p ON p.id = pp.product_id\n ORDER BY pp.quantity DESC, pp.revenue_cents DESC",
+  "model": "anthropic/claude-opus-5.5"
+}

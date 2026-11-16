@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: audit_log_page\n-- owner: compliance\n-- params: tenant_id, table_name, row_id, from, to, limit, offset\n-- One page of the audit trail, newest first. table_name and row_id are\n-- optional; pass NULL to skip the filter.\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s\n```\n\nIk geef de query ongewijzigd terug, omdat ik geen zinvolle verbetering zie. Het plan doet een backward index scan op `(tenant_id, created_at)` met een incremental sort voor de tie-breaker op `id`, en stopt na 201 rijen (0,12 ms, 180 buffers). De optionele `IS NULL OR`-filters vallen bij letterlijke parameterwaarden al weg bij het plannen, dus herschrijven (bijvoorbeeld naar UNION ALL-varianten) levert alleen risico op en geen winst.",
+  "input_tokens": 1803,
+  "output_tokens": 878,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.024772,
+  "usage_raw": {
+    "prompt_tokens": 1803,
+    "completion_tokens": 878,
+    "total_tokens": 2681,
+    "cost": 0.024772,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.024772,
+      "upstream_inference_prompt_cost": 0.007212,
+      "upstream_inference_completions_cost": 0.01756
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 319,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 9.1,
+  "sql": "-- name: audit_log_page\n-- owner: compliance\n-- params: tenant_id, table_name, row_id, from, to, limit, offset\n-- One page of the audit trail, newest first. table_name and row_id are\n-- optional; pass NULL to skip the filter.\nSELECT a.id,\n       a.tenant_id,\n       a.table_name,\n       a.row_id,\n       a.action,\n       a.old_data,\n       a.new_data,\n       a.actor_id,\n       a.is_system,\n       a.created_at\n  FROM audit_log a\n WHERE a.tenant_id = %(tenant_id)s\n   AND (%(table_name)s::text IS NULL OR a.table_name = %(table_name)s)\n   AND (%(row_id)s::uuid IS NULL OR a.row_id = %(row_id)s)\n   AND a.created_at >= %(from)s\n   AND a.created_at <  %(to)s\n ORDER BY a.created_at DESC, a.id DESC\n LIMIT %(limit)s OFFSET %(offset)s",
+  "model": "anthropic/claude-opus-5.5"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "Het origineel materialiseert alle orders met een geldige status over alle tenants, en aggregeert die voor elke klant. Pas daarna wordt op tenant gefilterd. Door eerst de klanten van de tenant te selecteren en alleen hun orders te joinen, wordt veel minder data verwerkt. Totalen en laatste order komen nu uit één aggregatie.\n\nLet op: `orders.created_at` is `timestamp without time zone` en `lo.last_order_at` werd vergeleken met de parameters op dezelfde manier. Ik behoud die vergelijking exact (`max(created_at)` heeft hetzelfde type), dus het gedrag is identiek.\n\n```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN LATERAL (\n        SELECT sum(o.total_cents) AS revenue,\n               count(*)           AS order_count,\n               max(o.created_at)  AS last_order_at\n          FROM orders o\n         WHERE o.customer_id = c.id\n           AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n       ) t ON t.order_count > 0\n WHERE c.tenant_id = %(tenant_id)s\n   AND t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s\n```\n\nEerst wordt op tenant gefilterd en daarna per klant geaggregeerd, in plaats van alle orders van alle tenants te materialiseren, sorteren en groeperen. Er is één aggregatie in plaats van drie CTE's, en `max(created_at)` vervangt `DISTINCT ON`. Zonder index op `orders(customer_id)` kan de lateral-join per klant een scan geven. Als de planner dan een hash-aggregatie verkiest, blijft het resultaat identiek.",
+  "input_tokens": 1982,
+  "output_tokens": 698,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.010944,
+  "usage_raw": {
+    "prompt_tokens": 1982,
+    "completion_tokens": 698,
+    "total_tokens": 2680,
+    "cost": 0.010944,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.010944,
+      "upstream_inference_prompt_cost": 0.003964,
+      "upstream_inference_completions_cost": 0.00698
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 5.9,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       t.revenue,\n       t.order_count,\n       t.last_order_at\n  FROM customers c\n  JOIN LATERAL (\n        SELECT sum(o.total_cents) AS revenue,\n               count(*)           AS order_count,\n               max(o.created_at)  AS last_order_at\n          FROM orders o\n         WHERE o.customer_id = c.id\n           AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n       ) t ON t.order_count > 0\n WHERE c.tenant_id = %(tenant_id)s\n   AND t.last_order_at >= %(from)s\n   AND t.last_order_at <  %(to)s\n ORDER BY t.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "```sql\n-- name: top_products\n-- owner: merchandising\n-- params: tenant_id, from, to, limit\n-- Best sellers by units and revenue. Line items reference the variant by its\n-- string id (integration feed), so it is cast when joining the catalog.\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT o.id)        AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM order_lines ol\n  JOIN orders o           ON o.id = ol.order_id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p         ON p.id = pv.product_id\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s\n```\n\nIk laat de query ongewijzigd, omdat ik geen herschrijving zie die gegarandeerd hetzelfde resultaat geeft zonder het schema te kennen. Vooraf aggregeren per variant kan de datatypes van de sommen veranderen (bigint wordt numeric) en de distinct-tellingen per product verstoren. Groeperen op alleen `p.id` werkt alleen als dat een primary key is, en dat staat niet vast. De planner kan de filters op `orders` en de join met de `::uuid`-cast al goed afhandelen, dus de winst zit vooral in indexen, bijvoorbeeld op `orders(tenant_id, created_at)` en `order_lines(order_id)`. Die vallen buiten deze opdracht.",
+  "input_tokens": 824,
+  "output_tokens": 1609,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.017738,
+  "usage_raw": {
+    "prompt_tokens": 824,
+    "completion_tokens": 1609,
+    "total_tokens": 2433,
+    "cost": 0.017738,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.017738,
+      "upstream_inference_prompt_cost": 0.001648,
+      "upstream_inference_completions_cost": 0.01609
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 896,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 13.0,
+  "sql": "-- name: top_products\n-- owner: merchandising\n-- params: tenant_id, from, to, limit\n-- Best sellers by units and revenue. Line items reference the variant by its\n-- string id (integration feed), so it is cast when joining the catalog.\nSELECT p.id,\n       p.sku,\n       p.name,\n       p.brand,\n       p.currency,\n       count(DISTINCT o.id)        AS order_count,\n       sum(ol.quantity)            AS quantity,\n       sum(ol.line_total_cents)    AS revenue_cents,\n       count(DISTINCT pv.id)       AS variant_count\n  FROM order_lines ol\n  JOIN orders o           ON o.id = ol.order_id\n  JOIN product_variants pv ON pv.id = ol.variant_id::uuid\n  JOIN products p         ON p.id = pv.product_id\n WHERE o.tenant_id = %(tenant_id)s\n   AND o.created_at >= %(from)s\n   AND o.created_at <  %(to)s\n   AND o.status IN ('paid', 'processing', 'shipped', 'delivered')\n GROUP BY p.id, p.sku, p.name, p.brand, p.currency\n ORDER BY quantity DESC, revenue_cents DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-sonnet-5.5"
+}

@@ -1,0 +1,33 @@
+{
+  "text": "```sql\nSELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       o.revenue,\n       o.order_count,\n       o.last_order_at\n  FROM customers c\n  JOIN (\n        SELECT customer_id,\n               sum(total_cents) AS revenue,\n               count(*)         AS order_count,\n               max(created_at)  AS last_order_at\n          FROM orders\n         WHERE status IN ('paid', 'processing', 'shipped', 'delivered')\n         GROUP BY customer_id\n        HAVING max(created_at) >= %(from)s\n           AND max(created_at) <  %(to)s\n       ) o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n ORDER BY o.revenue DESC\n LIMIT %(limit)s\n```\n\nHet origineel joinde de aggregatie met de `DISTINCT ON`-CTE via een nested loop, waarbij de planner de rijschatting op 1 zette en de HashAggregate ruim 9.800 keer opnieuw liep. De herschrijving berekent per klant één keer de aggregaten (`max(created_at)` geeft dezelfde `last_order_at` als de `DISTINCT ON`) en koppelt daarna met een hash join. Het resultaat blijft gelijk; bij gelijke `revenue`-waarden blijft de volgorde, net als in het origineel, niet-deterministisch.",
+  "input_tokens": 3478,
+  "output_tokens": 3250,
+  "stop_reason": "end_turn",
+  "cost_reported": 0.0019728,
+  "usage_raw": {
+    "prompt_tokens": 3478,
+    "completion_tokens": 3250,
+    "total_tokens": 6728,
+    "cost": 0.0019728,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.0019728,
+      "upstream_inference_prompt_cost": 0.0003478,
+      "upstream_inference_completions_cost": 0.001625
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 2753,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "seconds": 14.2,
+  "sql": "SELECT c.id,\n       c.email,\n       c.company,\n       c.country_code,\n       o.revenue,\n       o.order_count,\n       o.last_order_at\n  FROM customers c\n  JOIN (\n        SELECT customer_id,\n               sum(total_cents) AS revenue,\n               count(*)         AS order_count,\n               max(created_at)  AS last_order_at\n          FROM orders\n         WHERE status IN ('paid', 'processing', 'shipped', 'delivered')\n         GROUP BY customer_id\n        HAVING max(created_at) >= %(from)s\n           AND max(created_at) <  %(to)s\n       ) o ON o.customer_id = c.id\n WHERE c.tenant_id = %(tenant_id)s\n ORDER BY o.revenue DESC\n LIMIT %(limit)s",
+  "model": "anthropic/claude-haiku-5.5"
+}
